@@ -1,0 +1,2708 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MBTI® 專業認證架構・四階段深度評測系統</title>
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --surface: #ffffff;
+      --surface-alt: #f8fafc;
+      --border: #e2e8f0;
+      --border-strong: #cbd5e1;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --text-light: #64748b;
+      --primary: #1e3a8a;
+      --primary-hover: #1d4ed8;
+      --primary-soft: #eff6ff;
+      --accent: #0f766e;
+      --accent-soft: #f0fdfa;
+      --warn: #b45309;
+      --warn-soft: #fffbeb;
+      --danger: #b91c1c;
+      --danger-soft: #fef2f2;
+      --purple: #6d28d9;
+      --purple-soft: #f5f3ff;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+      --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* Header & Nav */
+    .topbar {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+      color: #fff;
+      padding: 16px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: var(--shadow-md);
+    }
+    .topbar-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-badge {
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .brand h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .subject-pill {
+      background: rgba(255, 255, 255, 0.14);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      display: none;
+    }
+    .subject-pill.active { display: inline-flex; align-items: center; gap: 6px; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+    .btn-accent {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-accent:hover:not(:disabled) { background: #0d9488; }
+    .btn-outline {
+      background: var(--surface);
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+    .btn-outline:hover:not(:disabled) { background: var(--surface-alt); border-color: var(--text-light); }
+    .btn-ghost-white {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+    .btn-ghost-white:hover { background: rgba(255, 255, 255, 0.22); }
+    .btn-danger-sm {
+      background: var(--danger-soft);
+      color: var(--danger);
+      border-color: #fecaca;
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+    .btn-sm { padding: 6px 12px; font-size: 13px; }
+
+    /* Container */
+    .container {
+      max-width: 1080px;
+      margin: 24px auto 60px;
+      padding: 0 20px;
+    }
+
+    /* Stepper */
+    .stepper {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+    .stepper.active { display: block; }
+    .stepper-track {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+    .step-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-light);
+    }
+    .step-item.current {
+      background: var(--primary-soft);
+      border-color: #93c5fd;
+      color: var(--primary);
+      font-weight: 700;
+    }
+    .step-item.done {
+      background: var(--accent-soft);
+      border-color: #99f6e4;
+      color: var(--accent);
+    }
+    .step-num { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+    /* Cards & Layout */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 20px;
+    }
+    .card-header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 14px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      margin: 0 0 4px;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .card-subtitle {
+      margin: 0;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 780px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .stepper-track { grid-template-columns: 1fr; }
+    }
+
+    /* Callouts */
+    .callout {
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      border-left: 4px solid var(--primary);
+      background: var(--primary-soft);
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .callout.warn {
+      border-left-color: var(--warn);
+      background: var(--warn-soft);
+      color: #78350f;
+    }
+    .callout.accent {
+      border-left-color: var(--accent);
+      background: var(--accent-soft);
+      color: #134e4a;
+    }
+    .callout.purple {
+      border-left-color: var(--purple);
+      background: var(--purple-soft);
+      color: #4c1d95;
+    }
+
+    /* Form Controls */
+    .form-group { margin-bottom: 16px; }
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .form-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-family: inherit;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.12);
+    }
+
+    /* History Table */
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .history-item {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface-alt);
+    }
+    .history-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .history-name { font-weight: 700; font-size: 15px; }
+    .history-sub { font-size: 12px; color: var(--text-light); }
+    .type-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 800;
+      font-size: 14px;
+      background: var(--primary);
+      color: #fff;
+      letter-spacing: 0.05em;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-ok { background: #dcfce7; color: #166534; }
+    .badge-warn { background: #fef3c7; color: #92400e; }
+    .badge-purple { background: #ede9fe; color: #5b21b6; }
+    .badge-blue { background: #dbeafe; color: #1e40af; }
+
+    /* Question Styles */
+    .q-block {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 18px;
+      background: var(--surface);
+      transition: border-color 0.2s;
+    }
+    .q-block.unanswered-highlight {
+      border-color: var(--danger);
+      box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.12);
+    }
+    .q-head {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .q-num {
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-weight: 800;
+      font-size: 13px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      flex-shrink: 0;
+    }
+    .q-title {
+      font-size: 15.5px;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    /* Stage 1 & 3 Option Cards */
+    .opt-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .opt-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      background: var(--surface-alt);
+      transition: all 0.15s;
+    }
+    .opt-card:hover { border-color: #93c5fd; background: #f8faff; }
+    .opt-card.selected {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+    }
+    .opt-card input {
+      margin-top: 4px;
+      accent-color: var(--primary);
+      transform: scale(1.15);
+      cursor: pointer;
+    }
+    .opt-text { font-size: 14.5px; color: var(--text); }
+
+    /* Stage 2 Forced Choice AB UI */
+    .ab-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    @media (max-width: 680px) {
+      .ab-grid { grid-template-columns: 1fr; }
+    }
+    .ab-box {
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface-alt);
+      font-size: 14.5px;
+    }
+    .ab-box strong {
+      display: inline-block;
+      margin-bottom: 4px;
+      color: var(--primary);
+      font-size: 13px;
+    }
+    .scale-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    @media (max-width: 580px) {
+      .scale-row { grid-template-columns: 1fr 1fr; }
+    }
+    .scale-btn {
+      padding: 10px 8px;
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.15s;
+      text-align: center;
+      font-family: inherit;
+    }
+    .scale-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .scale-btn.selected {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 2px 6px rgba(30, 58, 138, 0.25);
+    }
+
+    /* Stage 4 Tie-Breaker Cards */
+    .duel-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 680px) {
+      .duel-pair { grid-template-columns: 1fr; }
+    }
+    .duel-opt {
+      padding: 16px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      background: var(--surface-alt);
+      transition: all 0.15s;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .duel-opt:hover { border-color: #93c5fd; }
+    .duel-opt.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: 0 2px 8px rgba(15, 118, 110, 0.15);
+    }
+    .duel-tag {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--primary);
+      text-transform: uppercase;
+    }
+
+    /* Footer nav */
+    .wizard-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Report Visualizations */
+    .report-hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 65%, #0f766e 100%);
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-md);
+    }
+    .hero-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .hero-type {
+      font-size: 44px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      line-height: 1.1;
+    }
+    .hero-title {
+      font-size: 20px;
+      font-weight: 700;
+      opacity: 0.95;
+      margin-top: 4px;
+    }
+    .hero-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(150px, 1fr));
+      gap: 12px;
+      margin-top: 20px;
+    }
+    @media (max-width: 680px) {
+      .hero-metrics { grid-template-columns: 1fr; }
+    }
+    .hero-metric-box {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+    }
+    .hero-metric-label { font-size: 12px; opacity: 0.8; }
+    .hero-metric-val { font-size: 17px; font-weight: 700; margin-top: 2px; }
+
+    /* Bipolar Dimension Bars */
+    .dim-bar-card {
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 12px;
+      background: var(--surface-alt);
+    }
+    .dim-labels {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .bipolar-track {
+      position: relative;
+      height: 14px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .bipolar-center {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #475569;
+      z-index: 2;
+    }
+    .bipolar-fill {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      border-radius: 999px;
+    }
+
+    /* Facet Matrix */
+    .facet-group {
+      margin-bottom: 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .facet-group-head {
+      background: var(--surface-alt);
+      padding: 10px 14px;
+      font-weight: 700;
+      font-size: 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+    }
+    .facet-row {
+      display: grid;
+      grid-template-columns: 130px 1fr 130px 110px;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .facet-row:last-child { border-bottom: none; }
+    .facet-row.out-of-pref {
+      background: #fffbeb;
+    }
+    @media (max-width: 680px) {
+      .facet-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+    }
+    .facet-bar-wrap {
+      position: relative;
+      height: 10px;
+      background: #e2e8f0;
+      border-radius: 999px;
+    }
+    .facet-dot {
+      position: absolute;
+      top: -3px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: 2px solid #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      transform: translateX(-50%);
+    }
+    .facet-row.out-of-pref .facet-dot {
+      background: var(--warn);
+    }
+
+    /* Jungian 8 Functions Chart */
+    .fn-row {
+      display: grid;
+      grid-template-columns: 120px 1fr 56px;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    .fn-bar-bg {
+      height: 16px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .fn-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #1e3a8a, #0d9488);
+    }
+
+    .stack-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 14px;
+    }
+    @media (max-width: 680px) {
+      .stack-grid { grid-template-columns: 1fr; }
+    }
+    .stack-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      background: var(--surface-alt);
+    }
+    .stack-role {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .report-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .hidden { display: none !important; }
+
+    /* Print Styles */
+    @media print {
+      body { background: #fff; }
+      .topbar, .stepper, .report-toolbar, .no-print { display: none !important; }
+      .container { margin: 0; padding: 0; max-width: 100%; }
+      .card, .report-hero {
+        box-shadow: none;
+        break-inside: avoid;
+      }
+      .report-hero {
+        background: #0f172a !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .bipolar-fill, .fn-bar-fill, .facet-dot, .badge, .type-chip {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-badge">CERTIFIED ARCHITECTURE</span>
+        <h1>MBTI® 專業四階段深度評測系統</h1>
+      </div>
+      <div class="nav-actions">
+        <span id="subjectPill" class="subject-pill">受測者：<strong id="pillName"></strong></span>
+        <button id="btnHome" class="btn btn-ghost-white btn-sm" type="button">首頁 / 歷史紀錄</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Stepper -->
+    <div id="stepper" class="stepper">
+      <div class="stepper-track">
+        <div class="step-item" data-step="1"><span class="step-num">Stage 1</span>去角色化校準 (3題)</div>
+        <div class="step-item" data-step="2"><span class="step-num">Stage 2</span>Step II 20子切面 (20題)</div>
+        <div class="step-item" data-step="3"><span class="step-num">Stage 3</span>榮格八維與 Grip (12題)</div>
+        <div class="step-item" data-step="4"><span class="step-num">Stage 4</span>Best-Fit 對決驗證 (3題)</div>
+        <div class="step-item" data-step="5"><span class="step-num">Report</span>認證級深度報告</div>
+      </div>
+    </div>
+
+    <!-- VIEW: HOME -->
+    <section id="viewHome">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">開始新的專業評測</h2>
+            <p class="card-subtitle">結合 Step II™ 20 子切面、榮格八維動力學與 Best-Fit 自我驗證（約 10～15 分鐘）</p>
+          </div>
+          <div class="callout">
+            <strong>為何本系統比一般網路測驗準確？</strong><br />
+            1. 先透過 <strong>階段一「去角色化」</strong> 剝離職場訓練面具。<br />
+            2. 採 <strong>4 級迫選</strong> 消除模糊中間值，計算 PCI 偏好清晰度與跨維度特例。<br />
+            3. 獨立測量 <strong>榮格八維與高壓崩潰反應（The Grip）</strong>，再由雙軌引擎動態觸發 <strong>Best-Fit 類型對決</strong>。
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="inputName">受測者姓名或代號 <span style="color:var(--danger)">*</span></label>
+            <input id="inputName" class="form-input" type="text" placeholder="例如：王小明 / Alex" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="inputRole">受測者目前職業或生活角色（選填，輔助識別職場偏差）</label>
+            <input id="inputRole" class="form-input" type="text" placeholder="例如：軟體工程師、專案經理、大學生" />
+          </div>
+          <button id="btnStartNew" class="btn btn-primary" style="width:100%" type="button">建立受測檔案並進入階段一 →</button>
+        </div>
+
+        <div class="card">
+          <div class="card-header" style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;">
+            <div>
+              <h2 class="card-title">施測紀錄管理</h2>
+              <p class="card-subtitle">資料儲存於本機瀏覽器，支援多人重複施測與報告調閱</p>
+            </div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button id="btnExportJson" class="btn btn-outline btn-sm" type="button">匯出 JSON</button>
+              <label class="btn btn-outline btn-sm" style="margin:0; cursor:pointer;">
+                匯入 JSON
+                <input id="inputImportJson" type="file" accept=".json" style="display:none" />
+              </label>
+            </div>
+          </div>
+          <div id="historyContainer" class="history-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW: STAGE 1 -->
+    <section id="viewStage1" class="hidden">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">【階段一】去角色化校準（De-roling & Shoes-Off Self）</h2>
+          <p class="card-subtitle">請先幫助系統辨識您目前的「社會/職場角色面具」，以便後續交叉驗證時區分「後天習慣」與「天生偏好」。</p>
+        </div>
+        <div class="callout warn">
+          <strong>作答心法：</strong>接下來所有題目，請想像自己處於<strong>「沒有工作 KPI、沒有人看著你、不用向任何人證明什麼」</strong>的週末完全放鬆狀態（Shoes-Off Self）。
+        </div>
+        <div id="stage1Questions"></div>
+        <div class="wizard-footer">
+          <button class="btn btn-outline" id="btnS1Back" type="button">← 返回首頁</button>
+          <button class="btn btn-primary" id="btnS1Next" type="button">進入階段二（Step II 20 子切面）→</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW: STAGE 2 -->
+    <section id="viewStage2" class="hidden">
+      <div class="card">
+        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div>
+            <h2 class="card-title" id="s2Title">【階段二】Step II™ 偏好迫選測驗</h2>
+            <p class="card-subtitle" id="s2Subtitle">在兩種等值的描述中，誠實選出較貼近「無壓力狀態下真實本能」的傾向程度（不設中立選項）。</p>
+          </div>
+          <span class="badge badge-blue" id="s2PageBadge">第 1 / 4 組</span>
+        </div>
+        <div id="stage2Questions"></div>
+        <div class="wizard-footer">
+          <button class="btn btn-outline" id="btnS2Prev" type="button">← 上一組</button>
+          <button class="btn btn-primary" id="btnS2Next" type="button">下一組 →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW: STAGE 3 -->
+    <section id="viewStage3" class="hidden">
+      <div class="card">
+        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div>
+            <h2 class="card-title" id="s3Title">【階段三】榮格八維認知功能與壓力反撲驗證</h2>
+            <p class="card-subtitle" id="s3Subtitle">本階段測量大腦底層的資訊加工與決策軸線，以及高壓失控時的「劣勢功能反撲（The Grip）」。</p>
+          </div>
+          <span class="badge badge-purple" id="s3PageBadge">第 1 / 2 組</span>
+        </div>
+        <div id="stage3Questions"></div>
+        <div class="wizard-footer">
+          <button class="btn btn-outline" id="btnS3Prev" type="button">← 上一組</button>
+          <button class="btn btn-primary" id="btnS3Next" type="button">下一組 →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW: STAGE 4 -->
+    <section id="viewStage4" class="hidden">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">【階段四】Best-Fit 最佳契合類型對決驗證</h2>
+          <p class="card-subtitle">雙軌計分引擎已完成初步交叉比對。依據國際認證標準，最後請由您本人針對以下 3 個核心心理動力進行「模式甲 vs 模式乙」的最終確認。</p>
+        </div>
+        <div id="s4DiagnosticBanner" class="callout purple"></div>
+        <div id="stage4Questions"></div>
+        <div class="wizard-footer">
+          <button class="btn btn-outline" id="btnS4Back" type="button">← 返回階段三檢查</button>
+          <button class="btn btn-accent" id="btnS4Finish" type="button">完成驗證並產出專業認證報告 ✓</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW: REPORT -->
+    <section id="viewReport" class="hidden">
+      <div class="report-toolbar">
+        <button class="btn btn-primary" id="btnShareUrl" type="button">🔗 複製結果回傳連結（傳給施測者）</button>
+        <button class="btn btn-accent" id="btnCopyMd" type="button">複製 Markdown 文字報告</button>
+        <button class="btn btn-outline" id="btnPrint" type="button">列印 / 另存 PDF 報告</button>
+        <button class="btn btn-outline" id="btnNextSubject" type="button">儲存並測試下一位受測者</button>
+      </div>
+      <div id="reportContent"></div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const STORAGE_KEY = "mbti_pro_assessments_v1";
+
+      // ==========================================
+      // 1. 16 型完整專業知識庫 (MBTI + Jungian + Grip + PoLR)
+      // ==========================================
+      const TYPE_KB = {
+        INTJ: {
+          title: "戰略架構師（遠見與系統建構者）",
+          stack: ["Ni", "Te", "Fi", "Se"],
+          polr: "Fe",
+          coreDrive: "透過深層洞察看穿事物未來的必然軌跡，並建立一套高效、自洽的戰略系統讓願景落地。",
+          domDesc: "主導功能【內傾直覺 Ni】：大腦像全自動的後台模式壓縮機，習慣從海量現象中提煉唯一核心本質與長期趨勢，常在瞬間湧現「一切早就注定這樣發展」的預見感。",
+          auxDesc: "輔助功能【外傾思考 Te】：將腦中的宏大藍圖轉化為客觀指標、邏輯架構、里程碑與資源調度方案，極度厭惡無效溝通與混亂執行。",
+          tertDesc: "第三功能【內傾情感 Fi】：外表冷靜客觀，內心深處其實擁有極為堅定、不願隨便妥協的個人價值標準與美學原則，只對極少數人敞開。",
+          infDesc: "劣勢功能【外傾實感 Se】：較弱於當下即時物理環境的靈活應變，長期忽視身體訊號或對過度繁雜的感官刺激感到疲憊。",
+          gripDesc: "高壓進入【Se Grip】：平時極度自制有計畫，崩潰或過勞時會突然變得衝動、沉迷感官放縱（暴食、瘋狂網購、無止境刷影音），或對微小的環境雜音/物理混亂產生不成比例的暴怒。",
+          polrDesc: "第七盲點【外傾情感 Fe】：極度排斥無實質意義的社交客套、集體情緒表演或被迫察言觀色迎合團體氣氛，常覺得「把事情講對不就好了，為何要顧慮那麼多面子」。",
+          shoesOffDesc: "脫下面具時，最渴望大量不受打擾的安靜獨處時間，沉浸在研究深奧知識、推演長期模型或拆解複雜系統的自由中。",
+          growthAdvice: [
+            "練習區分「對事的嚴格標準」與「對人的情感連結」，在給出尖銳修正意見前先多一句肯定動機的話。",
+            "固定安排低強度的身體感官活動（如散步、重訓、正念呼吸），以健康的方式疏導 Se，預防高壓下的報復性放縱。",
+            "接受真實世界充滿無法 100% 預測的變數，刻意在計畫中留出 20% 的彈性緩衝。"
+          ]
+        },
+        INTP: {
+          title: "邏輯探索者（原理拆解與概念實驗家）",
+          stack: ["Ti", "Ne", "Si", "Fe"],
+          polr: "Se",
+          coreDrive: "徹底拆解萬事萬物背後的底層邏輯與第一性原理，只要找出完全自洽的真理模型便心滿意足，不急於強行控制外部世界。",
+          domDesc: "主導功能【內傾思考 Ti】：腦中內建極度精密的邏輯濾網，無法容忍「只知其然不知其所以然」，習慣把每個概念定義到毫無矛盾為止。",
+          auxDesc: "輔助功能【外傾直覺 Ne】：不斷從一個原理發散出無數跨界聯想與「如果…會怎樣」的思想實驗，思維跳躍且充滿原創性。",
+          tertDesc: "第三功能【內傾實感 Si】：透過累積與歸檔過去的知識經驗作為邏輯比對庫，偶爾會在意熟悉的生活小習慣與特定個人舒適圈。",
+          infDesc: "劣勢功能【外傾情感 Fe】：較難自然掌握複雜群體的情緒流動與人情潛規則，容易因過度追求客觀精準而不自覺刺傷他人。",
+          gripDesc: "高壓進入【Fe Grip】：平時冷靜超然、不甩他人眼光，極度崩潰時卻會突然陷入強烈的情感焦慮、罕見地情緒失控暴怒，或極度恐懼被重要群體排斥孤立。",
+          polrDesc: "第七盲點【外傾實感 Se】：最痛恨被要求隨時高度警覺眼前的物理環境細節、外表儀態規範，或在腦中還沒推演清楚前就被迫立刻做出身體反應。",
+          shoesOffDesc: "脫下面具時，完全不在乎世俗的目標進度條，可以為了一個冷門疑問熬夜查資料研究三天三夜，對「理解」本身的熱愛遠勝於「成果交付」。",
+          growthAdvice: [
+            "為自己感興趣的研究設定「最小可行性產出（MVP）」，練習把腦中精妙的模型轉化為別人看得懂的文字或實作。",
+            "意識到「人際情緒本身也是一種真實存在的客觀變因」，納入分析架構就不會那麼排斥溝通。",
+            "設法外包或自動化繁瑣的日常行政與環境整理，把專注力留給深度思考。"
+          ]
+        },
+        INFJ: {
+          title: "洞察引導者（人心預言家與意義守護者）",
+          stack: ["Ni", "Fe", "Ti", "Se"],
+          polr: "Te",
+          coreDrive: "看透人性背後的隱微動機與命運軌跡，並在維持群體深層和諧與尊嚴的前提下，推動有意義的轉化。",
+          domDesc: "主導功能【內傾直覺 Ni】：善於穿透表面語言與行為，直覺拼湊出一個人或一個局勢背後真正的心理脈絡與長遠走向。",
+          auxDesc: "輔助功能【外傾情感 Fe】：像極高解析度的情緒雷達，能自然感受現場氛圍與他人痛點，並溫和地調節自己的表達來照顧每個人。",
+          tertDesc: "第三功能【內傾思考 Ti】：在溫柔共情的外表下，其實藏著一把冷靜銳利的邏輯手術刀，私下會用極其嚴謹的結構審視事情是否合理。",
+          infDesc: "劣勢功能【外傾實感 Se】：過度活在未來的象徵與他人情緒裡，容易忽略眼前的具體物質現況、身體疲勞與物理細節。",
+          gripDesc: "高壓進入【Se Grip】：平時克制優雅且體貼，崩潰時突然變得極度固執於眼前微小感官失序、暴飲暴食或沉溺逃避現實的感官刺激，感到身體與環境全面失控。",
+          polrDesc: "第七盲點【外傾思考 Te】：極度抗拒只看冷冰冰的外部 KPI、效率數字與標準化評比去淘汰或評價人，覺得這種運作方式既粗暴又喪失靈魂。",
+          shoesOffDesc: "脫下面具時，極需撤離嘈雜的人際磁場，透過大量獨處來清空從別人身上吸收來的情緒雜訊，並沉浸在文學、哲學或內在深度反思中。",
+          growthAdvice: [
+            "建立明確的「情緒邊界」，練習分辨哪些情緒是對方的課題、不需要由你一肩扛起。",
+            "學習用中性客觀的 Te 工具（如時間塊、清單）保護自己的精力，不要因為怕衝突而無限透支自己。",
+            "大膽把腦中深邃的洞見說出來並容許不完美，不必等到 100% 確定會被理解才表達。"
+          ]
+        },
+        INFP: {
+          title: "理想調停者（靈魂忠誠者與意義編織者）",
+          stack: ["Fi", "Ne", "Si", "Te"],
+          polr: "Se",
+          coreDrive: "絕對忠於內心深處不可妥協的良知、真誠感與個人價值觀，並透過開放的想像力為世界賦予溫柔的意義。",
+          domDesc: "主導功能【內傾情感 Fi】：內心像一座深邃的神殿，對「真實、善意、虛偽、背叛」擁有極度敏銳的本能判斷，絕不願為迎合體制而背叛本心。",
+          auxDesc: "輔助功能【外傾直覺 Ne】：對外界的隱喻、故事、可能性充滿好奇心，總能從不同角度看見別人的潛力與事物的詩意聯想。",
+          tertDesc: "第三功能【內傾實感 Si】：非常珍視帶有情感溫度的過往回憶、熟悉的個人儀式感與微小細節。",
+          infDesc: "劣勢功能【外傾思考 Te】：平時對冰冷的效率最大化、權力結構與強制性時間表感到疏離與吃力。",
+          gripDesc: "高壓進入【Te Grip】：平時極度包容體貼、不愛指責別人，但在長期被逼到極限時，會突然變成苛刻挑剔的控制狂，瘋狂列清單、怒斥他人毫無效率與邏輯。",
+          polrDesc: "第七盲點【外傾實感 Se】：對強調即時物理反應、競爭搶快、表面虛華或高度物質化的環境感到格格不入與精神耗竭。",
+          shoesOffDesc: "脫下面具時，渴望自由無拘地沉浸在創作、音樂、深層情感對話或發散的想像世界裡，不需要交出任何符合世俗期待的成績單。",
+          growthAdvice: [
+            "練習在「價值認同」與「現實執行」之間搭橋：把抽象理想拆成每天 15 分鐘的小步驟，減少拖延焦慮。",
+            "當別人提出客觀批評（Te）時，練習先接收資訊而不立刻解讀為對你整個人格的否定。",
+            "學習對不合理的要求說「不」，不必用耗盡自己來換取表面和氣。"
+          ]
+        },
+        ISTJ: {
+          title: "秩序守護者（實證基石與責任執行者）",
+          stack: ["Si", "Te", "Fi", "Ne"],
+          polr: "Fe",
+          coreDrive: "堅守經過時間與經驗驗證的可靠標準，以嚴謹的責任感與精準執行力維護秩序、承諾與長期穩定。",
+          domDesc: "主導功能【內傾實感 Si】：擁有極為精細的經驗檔案庫，能敏銳比對眼前細節與過往標準的微小差異，做過的承諾一定說到做到。",
+          auxDesc: "輔助功能【外傾思考 Te】：講求步驟清楚、規章明確、效率可驗證，習慣用條理分明的系統把混亂的事務徹底落地。",
+          tertDesc: "第三功能【內傾情感 Fi】：看似不苟言笑，實則極其重視私密的忠誠度、是非良心與對家人的默默守護。",
+          infDesc: "劣勢功能【外傾直覺 Ne】：面對毫無根據、頻繁朝令夕改或充滿不確定性的突發變局容易感到莫名不安。",
+          gripDesc: "高壓進入【Ne Grip】：平時冷靜穩重、腳踏實地，崩潰時腦袋突然陷入失控的「災難化聯想」，瘋狂想像各種最離譜的負面後果，覺得所有累積都要毀於一旦。",
+          polrDesc: "第七盲點【外傾情感 Fe】：面對過度渲染集體情緒、講究社交客套話術或不看事實只講面子的人際場域，會感到極度不自在且不知如何配合。",
+          shoesOffDesc: "脫下面具時，享受安靜可預期的居家節奏、重溫熟悉的嗜好或專注完成一件看得到具體成果的手作與整理。",
+          growthAdvice: [
+            "在面對未知變化時，練習把 Ne 的腦內風暴轉化為「制定 A/B/C 三套備案」，就能迅速找回掌控感。",
+            "體諒並非所有人都用同樣的記憶精準度運作，溝通時多給對方一點情感溫度與背景脈絡。",
+            "偶爾允許自己嘗試無關緊要的小變動，訓練對不確定性的耐受度。"
+          ]
+        },
+        ISTP: {
+          title: "精密工匠（現場解構與危機應變專家）",
+          stack: ["Ti", "Se", "Ni", "Fe"],
+          polr: "Ne",
+          coreDrive: "透過親手拆解、實測與冷靜的邏輯推導，即時掌握實體工具與現實世界的運作機制，在最低干擾下高效解決眼前問題。",
+          domDesc: "主導功能【內傾思考 Ti】：追求極致精準的運作原理與因果效率，不盲從權威或死板 SOP，只相信自己親自驗證過可行的邏輯。",
+          auxDesc: "輔助功能【外傾實感 Se】：對眼前環境、機械動態與危機訊號擁有超凡的即時反應力，越是突發緊急狀況越顯冷靜銳利。",
+          tertDesc: "第三功能【內傾直覺 Ni】：偶爾會在沉思後突然抓到事物深層的關鍵捷徑或暗藏趨勢。",
+          infDesc: "劣勢功能【外傾情感 Fe】：極度不擅長處理漫無止境的情緒安撫或複雜的人情維繫，常因直來直往而顯得冷漠。",
+          gripDesc: "高壓進入【Fe Grip】：平時超然灑脫、萬事不求人，壓抑過頭崩潰時會突然情緒大爆發、過度解讀別人對自己的評價，或陷入深沉的孤立自憐。",
+          polrDesc: "第七盲點【外傾直覺 Ne】：最痛恨坐在會議室裡聽一群人針對毫無實物基礎的未來大餅進行「無止境的假設與空想腦力激盪」。",
+          shoesOffDesc: "脫下面具時，極需高度的個人空間與行動自由，喜歡動手修繕改造、戶外運動、沉浸在需要精準操作感的遊戲或技術鑽研中。",
+          growthAdvice: [
+            "在重要關係中，練習把內心在意與照顧用對方聽得懂的口語表達出來，不要以為「做了事就等於說了愛」。",
+            "做長期職業或人生決策時，試著把時間軸拉長到 3～5 年，善用 Ni 思考長期累積方向。",
+            "定期為過多的人際摩擦設定界線，避免情感壓力累積到臨界點才爆發。"
+          ]
+        },
+        ISFJ: {
+          title: "溫暖守護者（細膩記憶與實際照護者）",
+          stack: ["Si", "Fe", "Ti", "Ne"],
+          polr: "Te",
+          coreDrive: "記住身邊重要之人的細微需求與過往點滴，透過穩定可靠的實際行動與溫情關懷，為大家打造安心的避風港。",
+          domDesc: "主導功能【內傾實感 Si】：記得別人隨口提過的喜好、過往的承諾與經驗細節，透過延續可靠的傳統與步驟維持生活安全感。",
+          auxDesc: "輔助功能【外傾情感 Fe】：極為體貼敏銳，自然而然就會站在他人角度預先設想，主動填補大家沒注意到的照顧缺口。",
+          tertDesc: "第三功能【內傾思考 Ti】：安靜時會用相當務實清晰的邏輯默默分析這件事到底合不合理，並不只是單純的濫好人。",
+          infDesc: "劣勢功能【外傾直覺 Ne】：面對沒有先例可循的混亂變革或突然被要求顛覆傳統時，容易陷入過度擔憂。",
+          gripDesc: "高壓進入【Ne Grip】：平時溫和穩定、任勞任怨，極度疲憊失控時腦海會不斷冒出各種「萬一失控怎麼辦」的負面災難幻想，變得多疑且難以安撫。",
+          polrDesc: "第七盲點【外傾思考 Te】：最抗拒必須完全忽略個人情分、僅憑冰冷數據指標強硬指揮或淘汰別人的鐵血管理方式。",
+          shoesOffDesc: "脫下面具時，喜歡待在熟悉溫馨的個人空間，細心整理日常、重溫喜愛的作品，或只與極少數讓人安心的親友安靜相處。",
+          growthAdvice: [
+            "切記「善良必須帶有界線」，長期過度承擔他人責任卻不說出口，最終只會累積成隱性的怨氣。",
+            "練習客觀評估事件的實際可行性（Te），別因為怕別人失望就答應超出負荷的請求。",
+            "面對變動時提醒自己「沒經歷過不代表一定會變壞」，給未知留一點善意的空間。"
+          ]
+        },
+        ISFP: {
+          title: "本真藝術家（審美感知與自由體驗者）",
+          stack: ["Fi", "Se", "Ni", "Te"],
+          polr: "Ne",
+          coreDrive: "忠實傾聽內心此時此刻的真實感受與審美直覺，透過具體的感官體驗、手作創造或無聲行動活出獨一無二的本真。",
+          domDesc: "主導功能【內傾情感 Fi】：對事物的美醜、真偽與人際間是否真誠有極強的直覺定見，不喜歡用長篇大論說教，更相信用活出來的樣子表達立場。",
+          auxDesc: "輔助功能【外傾實感 Se】：對色彩、聲音、材質、空間氛圍與當下流動的微表情極度敏銳，喜歡直接動手創造與親自體驗世界。",
+          tertDesc: "第三功能【內傾直覺 Ni】：偶爾能透過感官媒介直覺捕捉到深刻的人生象徵意義與關鍵趨勢。",
+          infDesc: "劣勢功能【外傾思考 Te】：對僵化的 KPI 報表、長期計畫控管與強迫性競爭體制容易感到抗拒與缺乏自信。",
+          gripDesc: "高壓進入【Te Grip】：平時隨和自由、尊重個人節奏，被逼到崩潰時突然變得極度焦躁苛刻，急著用強硬的規則控制局面，並嚴厲批判自己與他人的能力不足。",
+          polrDesc: "第七盲點【外傾直覺 Ne】：極度排斥脫離感官真實、無止境的抽象概念辯論或反覆推翻重來的理論空談。",
+          shoesOffDesc: "脫下面具時，渴望沒有時鐘催促的自由午後，沉浸在美學創作、音樂、美食、大自然或純粹的感官療癒中。",
+          growthAdvice: [
+            "練習在心情還沒準備好之前，也先用簡單可執行的時間規劃（Te）幫重要作品或夢想推進 10%。",
+            "當別人跟你講邏輯結構與長遠規劃時，不要立刻覺得對方在否定你的感受，試著把它當成保護你熱愛的盾牌。",
+            "給自己勇氣把內心的真實需求明確說出口，別期望別人能完全讀懂你的沉默。"
+          ]
+        },
+        ENTJ: {
+          title: "統帥執行官（系統重塑與目標推進者）",
+          stack: ["Te", "Ni", "Se", "Fi"],
+          polr: "Si",
+          coreDrive: "看準長期戰略目標後，強勢整合一切外部系統、人才與資源，排除低效障礙並果斷推進直至徹底勝利。",
+          domDesc: "主導功能【外傾思考 Te】：天生具備將混亂局面結構化、量化並制定必勝路線圖的強大執行意志，對無能與推託零容忍。",
+          auxDesc: "輔助功能【內傾直覺 Ni】：不滿足於眼前小利，能看見五年後的戰略制高點，使每一步行動都精準服務於長遠佈局。",
+          tertDesc: "第三功能【外傾實感 Se】：充滿衝勁與現場掌控力，享受高張力的挑戰與現實資源調動的快感。",
+          infDesc: "劣勢功能【內傾情感 Fi】：平時習慣壓抑私人脆弱情感來換取決策的絕對客觀，容易忽略自己與他人細膩的內心價值痛點。",
+          gripDesc: "高壓進入【Fi Grip】：平時看似無堅不摧，但在長期孤軍奮戰或價值受挫崩潰時，會突然陷入深沉的自我懷疑與委屈感，覺得「沒人真正懂我、所有人都在利用我的能力」。",
+          polrDesc: "第七盲點【內傾實感 Si】：最痛恨每天被迫重複一成不變的瑣碎行政細節、保守遵循毫無意義的舊慣例，以及被迫關注微末的保養儀式。",
+          shoesOffDesc: "脫下面具時，其實最渴望找到少數智識對等、值得完全信任的戰友進行深度戰略對話，或投入具有明確進階回饋的高難度競技。",
+          growthAdvice: [
+            "承認「人的情緒與歸屬感（Fi）」是系統能否長期運轉的核心燃料，慢下來傾聽團隊感受反而能加速。",
+            "練習建立固定的身體休息與反思時間，別把疲勞訊號當成只需要克服的軟弱。",
+            "在他人還沒跟上你的思考速度前，多一點耐心引導而非直接接手代勞。"
+          ]
+        },
+        ESTJ: {
+          title: "實務督導者（秩序推進與標準落實者）",
+          stack: ["Te", "Si", "Ne", "Fi"],
+          polr: "Ni",
+          coreDrive: "透過已驗證的可靠制度、清晰權責與高效執行力，確保組織與生活按規矩穩健運轉並準時交付可靠成果。",
+          domDesc: "主導功能【外傾思考 Te】：天生擅長建立清楚的規則、排程與分工表，問題出現時第一時間找出責任歸屬與最快解決方案。",
+          auxDesc: "輔助功能【內傾實感 Si】：高度尊重實證經驗與過去累積的成功標準，確保品質穩定、不出紕漏。",
+          tertDesc: "第三功能【外傾直覺 Ne】：在需要突破僵局時，也能提出務實的替代方案與多元幽默感。",
+          infDesc: "劣勢功能【內傾情感 Fi】：在全力推進進度時，常忽略旁人主觀脆弱的情緒感受或自己內在真正想要什麼。",
+          gripDesc: "高壓進入【Fi Grip】：平時講求公平理性與高效，崩潰時突然覺得「自己付出這麼多卻沒人感激」，陷入強烈委屈孤立與非理性的情緒化防衛。",
+          polrDesc: "第七盲點【內傾直覺 Ni】：極度不耐煩沒有事實依據的玄妙暗示、過度迂迴的哲學隱喻或飄在半空中的長期願景空話。",
+          shoesOffDesc: "脫下面具時，喜歡與家人朋友進行直接熱絡的聚會活動，或在秩序井然、規則清晰的休閒運動與興趣中放鬆。",
+          growthAdvice: [
+            "提醒自己「你的標準並不是唯一合法的標準」，給不同運作節奏的人留一點呼吸空間。",
+            "偶爾練習只問「我內心真正喜歡什麼」而非「這件事對不對、有沒有用」，連結真實的 Fi。",
+            "對待親近之人時，先把「指導建議模式」關掉，單純聽對方把情緒說完。"
+          ]
+        },
+        ENFJ: {
+          title: "感召領航員（群體願景與人心賦能者）",
+          stack: ["Fe", "Ni", "Se", "Ti"],
+          polr: "Si",
+          coreDrive: "深刻洞察人們內在潛力與集體共同願景，透過溫暖而具感染力的領導與溝通，凝聚眾人一起成就更美好的改變。",
+          domDesc: "主導功能【外傾情感 Fe】：極具人際磁場與現場共情天賦，能瞬間讀懂團體張力並主動串聯每個人，讓人覺得被看見且充滿動力。",
+          auxDesc: "輔助功能【內傾直覺 Ni】：不只是討好大家，更能洞察每個人與整個組織未來的成長可能性與深層意義。",
+          tertDesc: "第三功能【外傾實感 Se】：充滿行動張力與舞台表現力，擅長用鮮活具體的方式呈現願景。",
+          infDesc: "劣勢功能【內傾思考 Ti】：容易過度看重外界的回饋與關係和諧，而在面對純粹冰冷、不講情面的獨立邏輯檢視時感到受傷或自我懷疑。",
+          gripDesc: "高壓進入【Ti Grip】：平時溫暖包容、鼓勵大家，但在長期掏空自己卻得不到回應崩潰時，會突然變得極度冷漠疏離、用尖酸刻薄的「冷酷邏輯」挑剔所有人的破綻。",
+          polrDesc: "第七盲點【內傾實感 Si】：對一成不變的死板行政報表、瑣碎的過去慣例核對與枯燥的例行公事感到極度消磨。",
+          shoesOffDesc: "脫下面具時，依然喜歡與靈魂契合的摯友深入交流人生意義，但極需短暫完全卸下「照顧所有人」的責任。",
+          growthAdvice: [
+            "小心「過度責任感陷阱」：別人的人生課題你不需要替他承擔，過度協助有時反而剝奪了對方的成長。",
+            "練習定期獨處並進行冷靜的自我邏輯盤點（Ti）：「我這麼做到底是因為事實正確，還是只是為了怕大家不開心？」",
+            "先滿足自己最基本的生理與情緒需求，才有真實能量持續點亮他人。"
+          ]
+        },
+        ESFJ: {
+          title: "和諧協調者（人情紐帶與細膩款待者）",
+          stack: ["Fe", "Si", "Ne", "Ti"],
+          polr: "Ni",
+          coreDrive: "透過主動照顧每個人的實際需求、維護珍貴傳統與和諧的人際網路，讓社群裡的每個人都感受到歸屬感與溫暖。",
+          domDesc: "主導功能【外傾情感 Fe】：對人際冷暖、團體規範與他人期待極度敏感，總能自然招呼好每個角落的人，讓聚會與團隊氣氛融洽。",
+          auxDesc: "輔助功能【內傾實感 Si】：記得大家的生日、飲食習慣與過往點滴，用穩妥具體、經驗可靠的方式把人照顧得無微不至。",
+          tertDesc: "第三功能【外傾直覺 Ne】：在熟悉的社交圈中機靈風趣，能聯想到許多讓大家開心的貼心點子。",
+          infDesc: "劣勢功能【內傾思考 Ti】：對突如其來、完全不顧人情世故的尖銳邏輯質疑容易產生強烈排斥感，甚至覺得是針對個人。",
+          gripDesc: "高壓進入【Ti Grip】：平時熱心善意、處處為人著想，崩潰時突然鑽進負面懷疑的牛角尖，變得異常防衛、冷漠挑剔別人的小毛病或自我苛責「一無是處」。",
+          polrDesc: "第七盲點【內傾直覺 Ni】：面對講求玄妙暗喻、忽略現實細節的抽象遠期空談或孤僻不合群的長期隱秘佈局，感到難以理解與不安。",
+          shoesOffDesc: "脫下面具時，最享受在溫馨熟悉的家庭或好友圈中分享美食、近況與照顧彼此的真實日常。",
+          growthAdvice: [
+            "當有人對方案提出冷靜的邏輯反對時，練習將它區分為「對事不對人」，這能大幅減少你不必要的內耗。",
+            "勇於表達自己真實的疲憊與不情願，不必永遠扮演「有求必應的好人」。",
+            "練習在沒有外部肯定時，也能依靠內在明確的是非準則肯定自己的價值。"
+          ]
+        },
+        ENTP: {
+          title: "辯論創新者（概念顛覆與可能性玩家）",
+          stack: ["Ne", "Ti", "Fe", "Si"],
+          polr: "Fi",
+          coreDrive: "透過不斷挑戰既定規則、跨界連結新概念與銳利的邏輯辯論，解鎖事物潛藏的無限創新可能。",
+          domDesc: "主導功能【外傾直覺 Ne】：大腦是永不停歇的點子反應爐，看到任何系統的第一秒就能同時想到十種更聰明、更有趣或顛覆常規的玩法。",
+          auxDesc: "輔助功能【內傾思考 Ti】：不只是胡思亂想，而是擁有極強的邏輯拆解力，喜歡透過辯證與思維攻防來檢驗一個點子究竟站不站得住腳。",
+          tertDesc: "第三功能【外傾情感 Fe】：具備機智幽默的魅力與讀空氣能力，很懂得帶動話題、跟不同背景的人玩成一片。",
+          infDesc: "劣勢功能【內傾實感 Si】：極度缺乏對枯燥重複細節、長期例行公事與身體規律作息的耐性，常出現「開頭精彩、收尾痛苦」的現象。",
+          gripDesc: "高壓進入【Si Grip】：平時樂觀靈活、天不怕地不怕，長期過勞崩潰時會突然變得極度悲觀狹隘，開始執著於微小的身體病痛、過度懷疑健康或反芻過去做錯的小細節。",
+          polrDesc: "第七盲點【內傾情感 Fi】：最搞不懂為什麼有人會僅僅因為「主觀心情或私人道德潔癖」，就拒絕一個邏輯上明顯更聰明好玩的方案。",
+          shoesOffDesc: "脫下面具時，渴望與聰明開放的夥伴針對各種奇思妙想、冷知識或未來趨勢進行沒有立場包袱的頭腦風暴。",
+          growthAdvice: [
+            "意識到「把一個好點子完整收尾落地（Si）」所帶來的成就感，遠勝於開啟十個半途而廢的新坑。",
+            "在習慣性提出反駁（Devil's Advocate）前，先確認對方此刻需要的是「腦力辯論」還是「情感支持」。",
+            "尊重他人深層的個人價值底線，不是所有立場都能靠機智的邏輯辯論說服。"
+          ]
+        },
+        ENFP: {
+          title: "熱情倡議者（靈感火花與人文共鳴家）",
+          stack: ["Ne", "Fi", "Te", "Si"],
+          polr: "Ti",
+          coreDrive: "追隨內心真誠的熱愛與好奇心，透過與人和世界的深層共鳴，探索並點燃人生中所有令人興奮的可能性。",
+          domDesc: "主導功能【外傾直覺 Ne】：看見世界處處都是尚未連結的驚喜故事與潛在契機，充滿跨界創造力與感染周遭的陽光能量。",
+          auxDesc: "輔助功能【內傾情感 Fi】：在開朗外向的社交外表下，內心有極為清晰真誠的個人信念與是非良心，只對發自內心認同的事全力燃燒。",
+          tertDesc: "第三功能【外傾思考 Te】：一旦真正認定目標並啟動起來，其實展現出驚人的資源整合與系統執行魄力。",
+          infDesc: "劣勢功能【內傾實感 Si】：對重複性瑣事、日常帳單細節、枯燥的規範與維持一成不變的節奏極度容易分心與疲憊。",
+          gripDesc: "高壓進入【Si Grip】：平時充滿想像力與熱情，耗盡崩潰時會突然變得極度僵化悲觀，覺得過去的一切都是錯誤，或對微小的身體不適與環境細節感到窒息。",
+          polrDesc: "第七盲點【內傾思考 Ti】：極度痛恨被迫把充滿熱情與意義的靈感，逐字逐句拆解成枯燥無趣、只講嚴格冷硬定義與公理推導的紙上作業。",
+          shoesOffDesc: "脫下面具時，喜歡自由自在地穿梭於新奇體驗、創作表達與能聊進靈魂深處的真誠對話之間，最怕被無聊的日常框死。",
+          growthAdvice: [
+            "學習用精簡的「3 件事原則」收斂過多同時開跑的點子，讓最熱愛的核心專案真正長出果實。",
+            "建立低摩擦的日常規律系統（如固定睡前收尾、自動帳務），避免雜事累積成壓垮靈感的稻草。",
+            "定期留出安靜獨處時間，確認自己的熱情是來自內在 Fi 的真實召喚，而非被外界熱鬧拉著走。"
+          ]
+        },
+        ESTP: {
+          title: "行動實業家（現場冒險家與危機破局者）",
+          stack: ["Se", "Ti", "Fe", "Ni"],
+          polr: "Fi",
+          coreDrive: "直接跳進真實世界的現場，憑藉極致的環境敏銳度、務實邏輯與大膽行動力，即時破解難題並享受當下的掌控快感。",
+          domDesc: "主導功能【外傾實感 Se】：對現場氣氛、物理動向、商機與現實籌碼擁有雷達般的直覺反應，深信「動手做了才知道」，討厭紙上談兵。",
+          auxDesc: "輔助功能【內傾思考 Ti】：腦袋轉速極快且講求實際有效，擅長在混亂戰場中立刻找出最省力的規則漏洞或最佳路徑。",
+          tertDesc: "第三功能【外傾情感 Fe】：具備極強的現場感染力與察言觀色魅力，非常懂得如何談判、搞定人際關係與炒熱氣氛。",
+          infDesc: "劣勢功能【內傾直覺 Ni】：平時對十年後的抽象宿命或無止境的意義推演沒耐性，有時會因太快行動而忽略長遠連鎖後果。",
+          gripDesc: "高壓進入【Ni Grip】：平時膽大樂觀、兵來將擋，陷入極度低谷或無路可走時，會突然陷入偏執多疑，覺得所有巧合背後都是針對自己的黑暗宿命或陰謀。",
+          polrDesc: "第七盲點【內傾情感 Fi】：面對過度沉重私密的情緒剖析、或以「這不符合我內在主觀感受」為由卡住實務推進的狀況，感到困惑又煩躁。",
+          shoesOffDesc: "脫下面具時，離不開充滿刺激、速度、美食、社交互動與真實體感回饋的鮮活世界，久坐乾等絕對是最大折磨。",
+          growthAdvice: [
+            "做重大人生決定或投資前，刻意強迫自己暫停 24 小時，找一位信任的深思型夥伴幫你檢視長期盲點（Ni）。",
+            "練習在效率與直白之外，理解某些夥伴內在堅守的私人原則（Fi）並非刻意刁難你。",
+            "把對短線刺激的渴望導入能長期複利的專業或競技目標上。"
+          ]
+        },
+        ESFP: {
+          title: "活力表演者（當下體驗者與氣氛點燃者）",
+          stack: ["Se", "Fi", "Te", "Ni"],
+          polr: "Ti",
+          coreDrive: "全情投入此時此刻的感官豐盛與真誠人際互動，用真實的熱情與即時行動力把枯燥的日常變成鮮活的舞台。",
+          domDesc: "主導功能【外傾實感 Se】：對周遭環境的色彩、節奏、品味與人們當下的微表情極度敏銳，極擅長捕捉即時樂趣與解決眼前實務。",
+          auxDesc: "輔助功能【內傾情感 Fi】：擁有真誠率直的好惡與同理心，與人互動時真實不造作，對在乎的人非常講義氣與大方。",
+          tertDesc: "第三功能【外傾思考 Te】：務實起來時非常有行動組織力，懂得直接調動身邊資源把事情辦成。",
+          infDesc: "劣勢功能【內傾直覺 Ni】：不喜歡孤獨地對著遙遠不確定的未來做沉重推演，過度空想容易引發沒來由的不安。",
+          gripDesc: "高壓進入【Ni Grip】：平時樂觀開朗、專注當下，壓力破表時會突然陷入悲觀的宿命論，覺得「一切都沒意義、未來註定一片黑暗」並開始胡思亂想。",
+          polrDesc: "第七盲點【內傾思考 Ti】：最受不了脫離生活情境、冷冰冰且咬文嚼字的非實用純理論分析或繁瑣抽象邏輯公式。",
+          shoesOffDesc: "脫下面具時，渴望與喜歡的人聚在一起享受美食、音樂、旅行與各種真實的感官快樂，用五感感受活著的溫度。",
+          growthAdvice: [
+            "為重要目標建立「看得到即時正回饋」的長期階梯，讓長遠規劃變得像闖關遊戲一樣具體有趣。",
+            "在情緒湧上來或面臨批評時，試著稍微抽離一步看事情本身的客觀結構（Te/Ti），不必立刻感到受傷。",
+            "預留一點安靜沉澱的時間消化內心感受，有助於減少高壓下的突然悲觀。"
+          ]
+        }
+      };
+
+      const FUNCTIONS_INFO = {
+        Ni: { name: "內傾直覺 Ni", desc: "收斂本質、長期趨勢推演、模式洞察" },
+        Ne: { name: "外傾直覺 Ne", desc: "跨界發散聯想、創意腦力激盪、探索可能" },
+        Si: { name: "內傾實感 Si", desc: "經驗檔案比對、細節精準、穩定傳承" },
+        Se: { name: "外傾實感 Se", desc: "當下感官捕捉、即時行動掌控、現場張力" },
+        Ti: { name: "內傾思考 Ti", desc: "底層第一性原理、邏輯自洽、精準拆解" },
+        Te: { name: "外傾思考 Te", desc: "客觀效率指標、資源整合、系統化落地" },
+        Fi: { name: "內傾情感 Fi", desc: "深層個人良知、真實性堅持、內在價值" },
+        Fe: { name: "外傾情感 Fe", desc: "群體共情和諧、空氣感知、人際凝聚" }
+      };
+
+      // ==========================================
+      // 2. 完整標準化題庫 (Stage 1 + Stage 2 + Stage 3)
+      // ==========================================
+      const STAGE1_QUESTIONS = [
+        {
+          id: "D1",
+          type: "multi",
+          title: "D1【當前角色面具負荷】在過去一年中，你目前的工作職位、學業或家庭責任，最常「迫使」你展現哪一種樣子？（可複選 1～2 項）",
+          options: [
+            { val: "E_MASK", text: "高頻率社交、主動協調資源、熱絡應酬或公開表達" },
+            { val: "IT_MASK", text: "長時間獨自處理數據、程式碼、技術文件，或必須壓抑情緒保持絕對冷靜客觀" },
+            { val: "SJ_MASK", text: "嚴格遵守時程表、SOP 規範、細節稽核與零容錯執行" },
+            { val: "NPF_MASK", text: "不斷提出原創點子、處理突發混亂或安撫照顧他人情緒" },
+            { val: "NO_MASK", text: "我的日常角色與天性大致吻合，沒有明顯戴面具的感覺" }
+          ]
+        },
+        {
+          id: "D2",
+          type: "single",
+          title: "D2【脫鞋狀態回血方式】想像連續 3 天完全沒有工作、訊息通知、家人期待與社交義務，當你精力耗盡時，你會怎麼自然回復能量？",
+          options: [
+            { val: "I_ANCHOR", text: "徹底獨處、減少對話，沉浸在自己的思考、閱讀、研究、追劇或安靜活動中" },
+            { val: "E_ANCHOR", text: "找一兩位最信任的知己長談，或出門逛街、聚會與外部世界互動來找回活力" },
+            { val: "MIX_ANCHOR", text: "視疲勞類型而定，會先獨自放空幾小時，接著馬上想找人聊聊天或出門走走" }
+          ]
+        },
+        {
+          id: "D3",
+          type: "single",
+          title: "D3【跨時空青少年本能】回想 12～18 歲還沒有被職場 KPI 或社會化訓練「塑形」之前的你，在不被強迫的情況下，哪種描述最接近你當時不假思索的本能？",
+          options: [
+            { val: "S_EARLY", text: "注重實際看得到的東西、喜歡明確步驟與動手實作，對空談大道理沒耐性" },
+            { val: "N_EARLY", text: "腦中常冒出跳躍的奇思妙想，喜歡追問事物背後的意義、概念與各種「如果」" },
+            { val: "T_EARLY", text: "遇到爭論或選擇時，天然先看邏輯對錯、公平原則與因果結構" },
+            { val: "F_EARLY", text: "遇到爭論或選擇時，天然先顧慮身邊人的感受、氣氛和諧與內心價值認同" }
+          ]
+        }
+      ];
+
+      // Step II 20 Facets: polarity +1 means A is left pole (E/S/T/J), B is right pole (I/N/F/P)
+      // polarity -1 means A is right pole (I/N/F/P), B is left pole (E/S/T/J)
+      const STAGE2_QUESTIONS = [
+        // Group 0: E/I (Q1~Q5)
+        {
+          id: "Q1", dim: "EI", facetLeft: "主動發起", facetRight: "被動接收", polarity: 1,
+          A: "在一個不熟的聚會或跨部門會議中，你通常會主動開啟話題、自我介紹或幫大家破冰串場。",
+          B: "在一個不熟的聚會或跨部門會議中，你通常會先安靜觀察氣氛，等別人來搭話或確認有共同話題才加入。",
+          oopNoteLeft: "雖然總體偏向內向（I），但在「主動發起」切面偏向外向（E）：你在社交或工作場合能主動破冰或領銜對話，但事後仍需要獨處回血。",
+          oopNoteRight: "雖然總體偏向外向（E），但在「被動接收」切面偏向內向（I）：你在不熟的新環境會先慢熱觀察，等建立連結後才展現熱情活躍。"
+        },
+        {
+          id: "Q2", dim: "EI", facetLeft: "外顯表達", facetRight: "內斂保留", polarity: -1,
+          A: "心中的想法、情緒或立場，通常只會讓極少數深交的人知道，不太習慣在公開場合表露內心狀態。",
+          B: "心中的想法、感受或興奮點很容易直接寫在臉上或說出來，身邊的人通常很快就知道你的態度。",
+          oopNoteLeft: "雖然總體偏向內向（I），但在「外顯表達」切面偏向外向（E）：一旦談到你在乎的主題或熟人面前，你其實表達非常直接外放。",
+          oopNoteRight: "雖然總體偏向外向（E），但在「內斂保留」切面偏向內向（I）：你外表看似健談活躍，但真正的深層想法與私密感受其實藏得很深。"
+        },
+        {
+          id: "Q3", dim: "EI", facetLeft: "交際廣度", facetRight: "深度連結", polarity: 1,
+          A: "喜歡認識來自各行各業的新朋友、維持較廣泛的社交圈，跟不同人聊聊能帶來新鮮刺激。",
+          B: "偏好把有限的時間留給一兩位真正懂你的深交好友，泛泛之交太多會讓你覺得精力被稀釋。",
+          oopNoteLeft: "雖然總體偏向內向（I），但在「交際廣度」切面偏向外向（E）：你不排斥廣泛認識不同領域的人脈來獲取新資訊。",
+          oopNoteRight: "雖然總體偏向外向（E），但在「深度連結」切面偏向內向（I）：你雖熱愛與人互動，但內心極度看重少數幾個深交知己的品質。"
+        },
+        {
+          id: "Q4", dim: "EI", facetLeft: "行動導向", facetRight: "反思導向", polarity: -1,
+          A: "面對新任務或難題，你習慣先在腦中完整推演、寫下筆記或消化清楚後，再開口或動手。",
+          B: "面對新任務或難題，你習慣先動手試做或直接找人邊聊邊碰撞，在互動與行動中思緒才會逐漸清晰。",
+          oopNoteLeft: "雖然總體偏向內向（I），但在「行動導向」切面偏向外向（E）：你喜歡邊做邊試錯，透過行動來加速思考。",
+          oopNoteRight: "雖然總體偏向外向（E），但在「反思導向」切面偏向內向（I）：你在發言或重大行動前，習慣先獨自反芻推演清楚。"
+        },
+        {
+          id: "Q5", dim: "EI", facetLeft: "熱情活躍", facetRight: "安靜專注", polarity: 1,
+          A: "在充滿聲音、討論與人潮流動的環境中工作或學習，往往更能點燃你的活力與參與感。",
+          B: "在安靜、少干擾、能長時間不被打斷的環境中，你才能真正沉潛下來並發揮最佳狀態。",
+          oopNoteLeft: "雖然總體偏向內向（I），但在「熱情活躍」切面偏向外向（E）：你享受熱鬧場域的氛圍刺激，只是時間長了仍會感到電力耗盡。",
+          oopNoteRight: "雖然總體偏向外向（E），但在「安靜專注」切面偏向內向（I）：工作深度思考時，你非常需要安靜不受干擾的個人空間。"
+        },
+
+        // Group 1: S/N (Q6~Q10)
+        {
+          id: "Q6", dim: "SN", facetLeft: "具體實務", facetRight: "抽象概念", polarity: 1,
+          A: "談論事情時，你習慣用確切的數字、親眼所見的事實與具體細節來說明，較排斥模糊空泛的說法。",
+          B: "談論事情時，你常使用比喻、概念模型或背後的象徵意義來傳達整體輪廓，細節對你而言只是輔助。",
+          oopNoteLeft: "雖然總體偏向直覺（N），但在「具體實務」切面偏向實感（S）：溝通表達時，你懂得用精確數據與具體事例讓抽象想法落地。",
+          oopNoteRight: "雖然總體偏向實感（S），但在「抽象概念」切面偏向直覺（N）：你注重實際執行，但也非常能理解並運用比喻與宏觀概念模型。"
+        },
+        {
+          id: "Q7", dim: "SN", facetLeft: "務實可行", facetRight: "想像可能", polarity: -1,
+          A: "思考事物時，你常不受限於現況，喜歡追問「如果打破常規會怎樣」以及未來十種還未發生的可能性。",
+          B: "思考事物時，你會先立足於眼前的資源與現實條件，優先確認「這件事在現實中行不行得通」。",
+          oopNoteLeft: "雖然總體偏向直覺（N），但在「務實可行」切面偏向實感（S）：你不會空談不切實際的幻想，會先檢視眼前資源能否支撐。",
+          oopNoteRight: "雖然總體偏向實感（S），但在「想像可能」切面偏向直覺（N）：你腳踏實地，但思維仍常探索打破常規的未來可能性。"
+        },
+        {
+          id: "Q8", dim: "SN", facetLeft: "實務應用", facetRight: "概念架構", polarity: 1,
+          A: "學習一套新知識或新工具時，你最想知道「它現在能解決什麼實際問題、操作步驟是什麼」。",
+          B: "學習一套新知識或新工具時，你最想先搞懂「它背後的底層原理、架構邏輯與世界觀是什麼」。",
+          oopNoteLeft: "雖然總體偏向直覺（N），但在「實務應用」切面偏向實感（S）：你學東西重視立即能用、能解決現實問題。",
+          oopNoteRight: "雖然總體偏向實感（S），但在「概念架構」切面偏向直覺（N）：學實務技能時，你也會刻意追問背後的理論架構。"
+        },
+        {
+          id: "Q9", dim: "SN", facetLeft: "經驗驗證", facetRight: "理論推演", polarity: -1,
+          A: "面對沒遇過的現象，你常憑藉直覺抓取事物間的隱藏關聯，用理論推演或模式識別來理解它。",
+          B: "面對沒遇過的現象，你更信賴過去親身經歷過的經驗、已被證實的案例或可觀察的實證。",
+          oopNoteLeft: "雖然總體偏向直覺（N），但在「經驗驗證」切面偏向實感（S）：做判斷時你極重視過去累積的實證證據。",
+          oopNoteRight: "雖然總體偏向實感（S），但在「理論推演」切面偏向直覺（N）：面對未知情境，你也善於用模式識別抓出隱藏關聯。"
+        },
+        {
+          id: "Q10", dim: "SN", facetLeft: "傳統穩健", facetRight: "原創革新", polarity: 1,
+          A: "若現有做法已經過長期驗證且運作穩定，你傾向沿用並逐步微調優化，不主張為了變而變。",
+          B: "即便現有做法運作正常，你還是常忍不住想推翻重構、嘗試全新的原創做法，按部就班會讓你感到乏味。",
+          oopNoteLeft: "雖然總體偏向直覺（N），但在「傳統穩健」切面偏向實感（S）：你尊重已經行之有效的標準，不會為了創新而盲目推翻。",
+          oopNoteRight: "雖然總體偏向實感（S），但在「原創革新」切面偏向直覺（N）：你雖看重實務，但對突破傳統、嘗試原創改革充滿熱情。"
+        },
+
+        // Group 2: T/F (Q11~Q15)
+        {
+          id: "Q11", dim: "TF", facetLeft: "邏輯分析", facetRight: "同理共情", polarity: 1,
+          A: "做重大決定時，你習慣抽離個人情緒，把正反條件攤開來做客觀因果與利弊權衡。",
+          B: "做重大決定時，你會先代入當事人的處境，衡量這個決定對相關人員的感受與關係帶來的影響。",
+          oopNoteLeft: "雖然總體偏向情感（F），但在「邏輯分析」切面偏向思考（T）：重要抉擇時，你能抽離情緒做冷靜的因果利弊分析。",
+          oopNoteRight: "雖然總體偏向思考（T），但在「同理共情」切面偏向情感（F）：決策時，你特別會優先考量人的處境與情感影響。"
+        },
+        {
+          id: "Q12", dim: "TF", facetLeft: "客觀合理", facetRight: "價值關懷", polarity: -1,
+          A: "在堅持對錯與維護人心之間，你通常願意為了顧全他人的感受或信念價值而多一點通融與體諒。",
+          B: "在堅持對錯與維護人心之間，你通常認為「合理與公平原則」不能因人情而輕易退讓。",
+          oopNoteLeft: "雖然總體偏向情感（F），但在「客觀合理」切面偏向思考（T）：碰到原則問題時，你其實相當堅持公平合理、不輕易妥協。",
+          oopNoteRight: "雖然總體偏向思考（T），但在「價值關懷」切面偏向情感（F）：在法理之外，你懂得保有人情體諒與彈性溫度。"
+        },
+        {
+          id: "Q13", dim: "TF", facetLeft: "質疑檢視", facetRight: "包容協調", polarity: 1,
+          A: "聽到一個新提案時，你腦中第一個自然反應往往是去檢查它的邏輯漏洞、風險與不合理之處。",
+          B: "聽到一個新提案時，你腦中第一個自然反應往往是先尋找它的亮點，並思考怎麼讓大家達成共識。",
+          oopNoteLeft: "雖然總體偏向情感（F），但在「質疑檢視」切面偏向思考（T）：你面對提案能保持批判性警覺，不會盲目附和。",
+          oopNoteRight: "雖然總體偏向思考（T），但在「包容協調」切面偏向情感（F）：你擅長先肯定他人提案的價值並促成團隊共識。"
+        },
+        {
+          id: "Q14", dim: "TF", facetLeft: "批判修正", facetRight: "肯定接納", polarity: -1,
+          A: "當朋友向你傾訴煩惱時，你本能地會先給予情感上的共鳴、接納與陪伴，等對方情緒平復才談解法。",
+          B: "當朋友向你傾訴煩惱時，你本能地會先幫對方分析問題出在哪裡，並給出具體可執行的改善建議。",
+          oopNoteLeft: "雖然總體偏向情感（F），但在「批判修正」切面偏向思考（T）：面對朋友求助，你習慣直接幫對方梳理問題與給出實質解法。",
+          oopNoteRight: "雖然總體偏向思考（T），但在「肯定接納」切面偏向情感（F）：你懂得先給對方情緒支持與陪伴，不急著馬上糾錯說教。"
+        },
+        {
+          id: "Q15", dim: "TF", facetLeft: "堅定原則", facetRight: "溫和體貼", polarity: 1,
+          A: "在團隊合作中，你更在意目標是否精準達成與專業標準有沒有守住，偶爾意見衝突在所難免。",
+          B: "在團隊合作中，你非常在意團隊氛圍是否融洽與每個人是否被善待，尖銳的衝突會讓你感到消耗。",
+          oopNoteLeft: "雖然總體偏向情感（F），但在「堅定原則」切面偏向思考（T）：在團隊分工上，你很敢於守住專業標準不隨便放水。",
+          oopNoteRight: "雖然總體偏向思考（T），但在「溫和體貼」切面偏向情感（F）：你在追求績效同時極為在意團隊凝聚力與避免尖銳摩擦。"
+        },
+
+        // Group 3: J/P (Q16~Q20)
+        {
+          id: "Q16", dim: "JP", facetLeft: "系統規劃", facetRight: "隨性彈性", polarity: 1,
+          A: "對於出遊、專案或日常生活，你喜歡事先訂好清楚的行程表與檢查清單，掌控進度會讓你感到安心。",
+          B: "對於出遊、專案或日常生活，你喜歡只抓個大方向，保留大量空白隨興探索，排太死會讓你覺得像在上班。",
+          oopNoteLeft: "雖然總體偏向感知（P），但在「系統規劃」切面偏向判斷（J）：在重要專案或旅遊時，你也會預先列出清單來確保可控性。",
+          oopNoteRight: "雖然總體偏向判斷（J），但在「隨性彈性」切面偏向感知（P）：脫離工作後，你其實享受不被行程表綁死的隨性自由。"
+        },
+        {
+          id: "Q17", dim: "JP", facetLeft: "提前計畫", facetRight: "開放應變", polarity: -1,
+          A: "在做決定前，你喜歡把選項盡可能保留到最後一刻，因為「說不定還會出現更好的情報或變數」。",
+          B: "事情只要還沒拍板定案就讓你渾身不自在，你喜歡盡早做出決定、把這件事「結案收尾」好繼續下一件。",
+          oopNoteLeft: "雖然總體偏向感知（P），但在「提前計畫」切面偏向判斷（J）：面對關鍵決議時，你偏好盡快收斂拍板，不喜歡懸而未決。",
+          oopNoteRight: "雖然總體偏向判斷（J），但在「開放應變」切面偏向感知（P）：你樂意保持選項開放以迎接更佳的新資訊。"
+        },
+        {
+          id: "Q18", dim: "JP", facetLeft: "提前推進", facetRight: "壓力激發", polarity: -1,
+          A: "面對截止期限（Deadline），你往往在期限逼近時靈感與腎上腺素才會大爆發，早早做完反而覺得沒動力。",
+          B: "面對截止期限（Deadline），你習慣一拿到任務就提早分批推進，最後一刻才趕工會讓你極度焦慮。",
+          oopNoteLeft: "雖然總體偏向感知（P），但在「提前推進」切面偏向判斷（J）：面對重要期限你會提早分批推進，極力避免最後趕工。",
+          oopNoteRight: "雖然總體偏向判斷（J），但在「壓力激發」切面偏向感知（P）：雖然喜歡計畫，但你常在截止前的高壓狀態下產出最佳表現。"
+        },
+        {
+          id: "Q19", dim: "JP", facetLeft: "日程規律", facetRight: "自發湧現", polarity: 1,
+          A: "你的生活與工作偏向固定節奏與可預期性，突然被臨時插單或改變計畫很容易打亂你的狀態。",
+          B: "你很享受當下的靈感與意外驚喜，臨時起意改計畫或同時處理好幾件有趣的事反而讓你更有精神。",
+          oopNoteLeft: "雖然總體偏向感知（P），但在「日程規律」切面偏向判斷（J）：你偏好穩定可預期的作息節奏，不喜歡被頻繁臨時插單。",
+          oopNoteRight: "雖然總體偏向判斷（J），但在「自發湧現」切面偏向感知（P）：面對突發的有趣驚喜或臨時變動，你具備高度的應變彈性。"
+        },
+        {
+          id: "Q20", dim: "JP", facetLeft: "方法條理", facetRight: "突發靈活", polarity: -1,
+          A: "你的桌面、檔案夾或工作流程常呈現「只有自己懂的有機混亂」，喜歡在自由聯想與切換中找出路。",
+          B: "你習慣為物品、資料或任務建立明確的分類與歸位規則，事情按部就班排列清楚才好展開下一步。",
+          oopNoteLeft: "雖然總體偏向感知（P），但在「方法條理」切面偏向判斷（J）：對於核心檔案或工作環境，你非常要求井然有序的分類邏輯。",
+          oopNoteRight: "雖然總體偏向判斷（J），但在「突發靈活」切面偏向感知（P）：你心裡很有計畫，但物理桌面或資料架構偏向隨性有機混亂。"
+        }
+      ];
+
+      const STAGE3_QUESTIONS = [
+        {
+          id: "CF1",
+          title: "CF1【資訊湧入與加工模式】當你接觸到一個全新且複雜的議題時，大腦最自然的運轉畫面是？",
+          options: [
+            { text: "一個念頭瞬間炸出七八個跨界聯想，像樹枝一樣不斷發散延伸出各種「如果…會怎樣」。", weights: { Ne: 3, Ti: 1 } },
+            { text: "大腦默默在後台壓縮所有線索，突然「啊哈！」一聲直覺跳出唯一的核心本質或未來趨勢。", weights: { Ni: 3, Te: 1 } },
+            { text: "立刻聚焦於眼前看得到、摸得到的現場細節與真實動態，邊觀察邊直接反應。", weights: { Se: 3, Fi: 1 } },
+            { text: "自動把新資訊跟過去累積的經驗檔案庫逐一比對，找出熟悉處、差異點與可依循的細節。", weights: { Si: 3, Fe: 1 } }
+          ]
+        },
+        {
+          id: "CF2",
+          title: "CF2【日常認知舒適圈】在日常感官與資訊體驗上，哪一種狀態最讓你感到「對味且有安全感」？",
+          options: [
+            { text: "重溫熟悉的節奏、確定的標準流程，以及身體內部細微的舒適感與過去美好的記憶印記。", weights: { Si: 3 } },
+            { text: "敏銳捕捉當下的色彩、速度、聲音與現場張力，渴望身歷其境的即時感官刺激與行動掌控。", weights: { Se: 3 } },
+            { text: "剝開表面現象的干擾，在安靜中推演事物五年後的必然走向，建構出一套單一而深邃的個人洞見。", weights: { Ni: 3 } },
+            { text: "不斷切換視角、把看似無關的兩個概念拼湊在一起，享受「永遠有下一個新點子」的腦內風暴。", weights: { Ne: 3 } }
+          ]
+        },
+        {
+          id: "CF3",
+          title: "CF3【感知功能弱區與煩躁點】在日常執行任務時，哪一種「失誤或強迫」最常發生在你身上、或最讓你感到煩躁？",
+          options: [
+            { text: "過度沉浸在腦中的抽象推演與願景裡，常不小心忽略眼前環境變化、身體疲勞或漏看眼皮底下的東西。", weights: { Ni: 2, Se: -2 } },
+            { text: "腦中有無數創意，但一碰到要核對繁瑣的歷史資料、重複性行政細節或照顧日常規律作息就極度抗拒。", weights: { Ne: 2, Si: -2 } },
+            { text: "非常依賴既定經驗與可靠事實，但當環境要求毫無根據地天馬行空發想或面對完全未知變數時會莫名焦慮。", weights: { Si: 2, Ne: -2 } },
+            { text: "擅長即時解決眼前突發狀況，但被強迫坐下來空談「五年後的抽象願景或背後哲學意義」時覺得浪費時間。", weights: { Se: 2, Ni: -2 } }
+          ]
+        },
+        {
+          id: "CF4",
+          title: "CF4【記憶結構與時間維度】以下哪一段對「記憶與時間感」的描述最像你？",
+          options: [
+            { text: "我對過去的具體畫面、日期或當年的對話細節記得很清楚，且常常靠舊經驗的排列組合來觸發新點子。", weights: { Ne: 2, Si: 2 } },
+            { text: "我常記不清具體對話細節或時間點，但對事件「背後代表的意義、模式與給我的衝擊感」印象極深。", weights: { Ni: 2, Se: 2 } },
+            { text: "我活在「此時此刻」，過去的事過了就翻篇，未來太遠也懶得想，現在眼前的事最真實。", weights: { Se: 2, Si: 1 } },
+            { text: "我活在「意義與未來趨勢」的長河裡，常覺得眼前的日常瑣事只是某個更大劇本的過渡。", weights: { Ni: 2, Ne: 1 } }
+          ]
+        },
+        {
+          id: "CF5",
+          title: "CF5【決策評分最高準則】當一個團隊方案引發爭論時，你內心最優先用來評判「這個方案好不好」的尺是什麼？",
+          options: [
+            { text: "看客觀數據、可量化的投入產出比、流程效率以及它能否準時交付成果。", weights: { Te: 3 } },
+            { text: "看它的底層邏輯是否徹底自洽、定義是否精準無誤，只要原理有哪怕一處矛盾我就無法認同。", weights: { Ti: 3 } },
+            { text: "看這個方案能否顧及大多數人的感受、維持團隊整體和諧與共識，讓每個人都能被妥善安頓。", weights: { Fe: 3 } },
+            { text: "看它是否符合我內心深處不可妥協的道德良知與真實價值觀，哪怕全場都贊成，違背本心我就拒絕配合。", weights: { Fi: 3 } }
+          ]
+        },
+        {
+          id: "CF6",
+          title: "CF6【理性運作取向】面對一個複雜系統或難題，以下哪種說法最符合你的真實態度？（即使偏感性也請選相對最貼近的一項）",
+          options: [
+            { text: "我不在乎把所有底層原理研究到 100% 透徹，更在意「有沒有已被驗證的工具/SOP/指標能最快把問題解決掉」。", weights: { Te: 3, Ti: -1 } },
+            { text: "我無法忍受「只知其然不知其所以然」，就算照著 SOP 能過關，沒搞懂背後的底層邏輯結構我還是渾身難受。", weights: { Ti: 3, Te: -1 } },
+            { text: "比起純粹的邏輯推導或效率指標，我更習慣用「這件事對人的意義與互動品質」來判斷該怎麼做。", weights: { Fe: 2, Fi: 1 } },
+            { text: "只要這件事是我發自內心認同且熱愛的，效率或外部規則都不是首要考量；若不認同，再有效率我也提不起勁。", weights: { Fi: 2, Fe: 1 } }
+          ]
+        },
+        {
+          id: "CF7",
+          title: "CF7【情感與人際邊界機制】關於情緒與人際邊界，哪一種描述最精準命中你的內在機制？",
+          options: [
+            { text: "我像個雷達，走進房間就能瞬間讀懂空氣與別人的情緒起伏，並會本能調整言行去照顧現場氣氛（有時忽略自己想要什麼）。", weights: { Fe: 3 } },
+            { text: "我的情緒與價值觀像深海冰山，對「虛偽或迎合氣氛」極為敏感，優先忠於自己真實的感受，不易為合群而勉強表態。", weights: { Fi: 3 } },
+            { text: "在討論公事時，對方的情緒反應常讓我覺得干擾判斷，我更希望直接就事論事解決問題。", weights: { Te: 2, Ti: 1 } },
+            { text: "我不太擅長讀空氣或處理複雜的人際情緒暗示，常不小心講出過於直白精準但讓現場氣氛凍結的話。", weights: { Ti: 2, Te: 1 } }
+          ]
+        },
+        {
+          id: "CF8",
+          title: "CF8【內外判斷軸共存結構】仔細感受你內在的「理性 vs 感性」是如何共存的：",
+          options: [
+            { text: "對外做事我講求結果、效率與客觀標準，但內心深處其實藏著非常強烈且私密的個人好惡、原則與道德堅持。", weights: { Te: 2, Fi: 2 } },
+            { text: "我對事物的理解講求獨立思考與邏輯抽絲剝繭，但面對人際與群體時，又希望能融入大家、顧及禮貌與共同體感受。", weights: { Ti: 2, Fe: 2 } },
+            { text: "我不管內外都高度依賴理性思考，只有在極少數親近之人面前才會露出脆弱或感性的一面。", weights: { Te: 1, Ti: 1 } },
+            { text: "我的核心世界幾乎都是圍繞著「人、情感與意義」建立的，純粹冰冷的機器邏輯很難打動我。", weights: { Fe: 1, Fi: 1 } }
+          ]
+        },
+        {
+          id: "CF9",
+          title: "CF9【高壓劣勢反撲 I — 感知軸崩潰 The Grip】回想你人生中極度高壓、長期過勞或快撐不住的低谷期，最常出現哪種「反常失控狀態」？",
+          options: [
+            { text: "平時很能規劃克制，崩潰時突然變得極度衝動或沉溺感官刺激（暴飲暴食、瘋狂購物、追劇放縱），或對環境微末雜音/細節過度執著暴怒。", weights: { Ni: 3, Se: -2 }, gripDom: "Ni" },
+            { text: "平時穩重謹慎、按部就班，崩潰時腦袋突然開始不受控地「災難化聯想」，瘋狂想像各種最壞的離譜可能性，覺得未來全面失控。", weights: { Si: 3, Ne: -2 }, gripDom: "Si" },
+            { text: "平時樂觀靈活、點子滿滿，崩潰時突然變得極度悲觀狹隘，鑽牛角尖糾結於瑣碎的身體不適、微小的過去錯誤或繁瑣小事。", weights: { Ne: 3, Si: -2 }, gripDom: "Ne" },
+            { text: "平時行動力強且活在當下，崩潰時突然陷入深深的無力與偏執多疑，覺得所有事件背後都有針對自己的陰謀或悲觀宿命。", weights: { Se: 3, Ni: -2 }, gripDom: "Se" }
+          ]
+        },
+        {
+          id: "CF10",
+          title: "CF10【高壓劣勢反撲 II — 判斷軸崩潰 The Grip】承上題，在高壓耗盡或被嚴重冒犯時，你內心的「防禦性或情緒性反撲」更接近哪一種？",
+          options: [
+            { text: "平時果斷高效、講求結果，崩潰時突然覺得「沒人在乎我真正的價值、大家都在利用我」，陷入極度孤立委屈與自我懷疑的情緒風暴。", weights: { Te: 3, Fi: -2 }, gripDom: "Te" },
+            { text: "平時溫暖善解人意，崩潰時突然變得極度冷漠疏離、挑剔分析別人的邏輯破綻，用尖酸刻薄的「冷暴力理性」把所有人推開。", weights: { Fe: 3, Ti: -2 }, gripDom: "Fe" },
+            { text: "平時冷靜客觀獨立，崩潰時突然出現罕見的情緒失控暴怒、極度渴望別人肯定或害怕被孤立，事後又為自己的失態感到羞愧。", weights: { Ti: 3, Fe: -2 }, gripDom: "Ti" },
+            { text: "平時包容溫和、看重內心感受，崩潰時突然變成極度苛刻的控制狂，瘋狂列清單、批評別人的能力與效率、強迫一切必須「立刻見效」。", weights: { Fi: 3, Te: -2 }, gripDom: "Fi" }
+          ]
+        },
+        {
+          id: "CF11",
+          title: "CF11【核心心流狀態 Dominant Flow】當你處於「完全忘記時間流逝、大腦運轉最順暢、最有自信」的心流狀態時，你通常正在做什麼？",
+          options: [
+            { text: "一個人在安靜中抽絲剝繭，把一團混亂的資訊整合成一套極度精準、深邃的洞察模型或底層理論。", weights: { Ni: 2, Ti: 2 } },
+            { text: "面對一個高難度目標或全新領域，瘋狂串聯資源、腦力激盪新策略並迅速動手把它推進落地。", weights: { Ne: 2, Te: 2 } },
+            { text: "全神貫注地沉浸在自己深信且熱愛的創作、回憶或專業工藝裡，把每個細膩的質感打磨到問心無愧。", weights: { Fi: 2, Si: 2 } },
+            { text: "在充滿活力的真實現場與人即時互動、臨場反應、帶動氣氛或直接用行動解決眼前的刺激挑戰。", weights: { Se: 2, Fe: 2 } }
+          ]
+        },
+        {
+          id: "CF12",
+          title: "CF12【第七盲點功能 Trickster/PoLR】以下哪一種強制要求，最容易讓你從心底覺得「這根本是折磨，我完全抓不到要領或覺得極為荒謬」？（單選最痛苦的 1 項）",
+          options: [
+            { text: "被迫參加充滿客套寒暄與人情世故表演的社交場合，還必須隨時察言觀色去照顧大家的情緒氣氛。", weights: {}, polr: "Fe" },
+            { text: "被迫只看冰冷的外部 KPI、效率與投入產出比去批判或淘汰他人，完全不能考量背後的心理動機與情感關係。", weights: {}, polr: "Te" },
+            { text: "被要求隨時高度關注周遭物理細節、穿著儀態或即時感官變化，且必須在沒想清楚前立刻做出身體反應。", weights: {}, polr: "Se" },
+            { text: "被迫坐在會議室裡，針對毫無實物根據的未來抽象概念進行無止境的腦力激盪與「假設如果」。", weights: {}, polr: "Ne" },
+            { text: "被迫每天重複一成不變的繁瑣行政核對、嚴守死板的過去慣例，並細心記錄瑣碎的身體與日常細節。", weights: {}, polr: "Si" },
+            { text: "被迫放棄具體可行的現成經驗，去空談「事物背後玄妙的象徵意義」或推演十年後毫無依據的單一未來趨勢。", weights: {}, polr: "Ni" },
+            { text: "被迫不斷深入剖析自己私密的情感喜惡，並因為「這件事違背某人的個人主觀良心」就得放棄原本聰明好玩的方案。", weights: {}, polr: "Fi" },
+            { text: "被迫把原本充滿熱情與靈感的直覺想法，逐字逐句拆解成枯燥嚴謹、不能有任何邏輯漏洞的定義與公理推導。", weights: {}, polr: "Ti" }
+          ]
+        }
+      ];
+
+      // ==========================================
+      // 3. 應用程式狀態
+      // ==========================================
+      let state = {
+        currentRecordId: null,
+        subjectName: "",
+        subjectRole: "",
+        s1: { D1: [], D2: null, D3: null },
+        s2: {}, // Q1..Q20 -> +2, +1, -1, -2 (raw A++/A+/B+/B++)
+        s3: {}, // CF1..CF12 -> option index
+        s4: { candA: null, candB: null, answers: {} }, // 0..2 -> "A" | "B"
+        s2Page: 0, // 0..3
+        s3Page: 0, // 0..1
+        computed: null
+      };
+
+      // ==========================================
+      // 4. DOM 捷徑與輔助函式
+      // ==========================================
+      const $ = (id) => document.getElementById(id);
+
+      function loadHistory() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+          return [];
+        }
+      }
+
+      function saveHistory(list) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      }
+
+      function escapeHtml(str) {
+        return String(str || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function formatDate(iso) {
+        const d = new Date(iso);
+        const pad = (n) => String(n).padStart(2, "0");
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      }
+
+      function clearShareHash() {
+        if (window.location.hash && window.location.hash.startsWith("#r=")) {
+          try {
+            history.replaceState(null, "", window.location.href.split("#")[0]);
+          } catch (e) {
+            window.location.hash = "";
+          }
+        }
+      }
+
+      function showView(viewId, stepNum) {
+        ["viewHome", "viewStage1", "viewStage2", "viewStage3", "viewStage4", "viewReport"].forEach((id) => {
+          $(id).classList.toggle("hidden", id !== viewId);
+        });
+
+        const stepper = $("stepper");
+        const pill = $("subjectPill");
+        if (viewId === "viewHome") {
+          clearShareHash();
+          stepper.classList.remove("active");
+          pill.classList.remove("active");
+          renderHistory();
+        } else {
+          stepper.classList.add("active");
+          pill.classList.add("active");
+          $("pillName").textContent = state.subjectName;
+          document.querySelectorAll(".step-item").forEach((el) => {
+            const s = Number(el.dataset.step);
+            el.classList.remove("current", "done");
+            if (s === stepNum) el.classList.add("current");
+            else if (s < stepNum) el.classList.add("done");
+          });
+        }
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      // ==========================================
+      // 5. 首頁與歷史紀錄渲染
+      // ==========================================
+      function renderHistory() {
+        const container = $("historyContainer");
+        const list = loadHistory();
+        if (!list.length) {
+          container.innerHTML = `<div style="text-align:center; padding:32px 12px; color:var(--text-light); font-size:14px;">尚無歷史施測紀錄。<br />請於左側建立受測檔案開始第一次專業評測。</div>`;
+          return;
+        }
+        container.innerHTML = list
+          .map((item) => {
+            const c = item.computed || {};
+            const matchBadge = c.isConsistent
+              ? `<span class="badge badge-ok">雙軌一致</span>`
+              : `<span class="badge badge-warn">經衝突驗證定案</span>`;
+            return `
+              <div class="history-item">
+                <div class="history-meta">
+                  <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <span class="type-chip">${escapeHtml(c.bestFitType || "----")}</span>
+                    <span class="history-name">${escapeHtml(item.subjectName)}</span>
+                    ${matchBadge}
+                  </div>
+                  <span class="history-sub">${escapeHtml(formatDate(item.createdAt))} · ${escapeHtml(item.subjectRole || "未填寫角色")} · Step II 初評: ${escapeHtml(c.step2Type || "-")} / 八維推導: ${escapeHtml(c.jungTop1 || "-")}</span>
+                </div>
+                <div style="display:flex; gap:6px;">
+                  <button class="btn btn-outline btn-sm" data-action="view" data-id="${escapeHtml(item.id)}" type="button">檢視報告</button>
+                  <button class="btn btn-danger-sm" data-action="del" data-id="${escapeHtml(item.id)}" type="button">刪除</button>
+                </div>
+              </div>
+            `;
+          })
+          .join("");
+      }
+
+      $("historyContainer").addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-action]");
+        if (!btn) return;
+        const id = btn.dataset.id;
+        const action = btn.dataset.action;
+        const list = loadHistory();
+        if (action === "del") {
+          if (confirm("確定要刪除此筆施測報告紀錄嗎？")) {
+            saveHistory(list.filter((x) => x.id !== id));
+            renderHistory();
+          }
+        } else if (action === "view") {
+          const found = list.find((x) => x.id === id);
+          if (found) {
+            state = JSON.parse(JSON.stringify(found));
+            renderReport();
+            showView("viewReport", 5);
+          }
+        }
+      });
+
+      $("btnExportJson").addEventListener("click", () => {
+        const list = loadHistory();
+        if (!list.length) {
+          alert("目前沒有可匯出的紀錄。");
+          return;
+        }
+        const blob = new Blob([JSON.stringify(list, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `mbti_pro_records_${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      $("inputImportJson").addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const imported = JSON.parse(reader.result);
+            if (!Array.isArray(imported)) throw new Error("格式錯誤");
+            const existing = loadHistory();
+            const map = new Map(existing.map((r) => [r.id, r]));
+            imported.forEach((r) => {
+              if (r && r.id && r.computed) map.set(r.id, r);
+            });
+            const merged = Array.from(map.values()).sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+            saveHistory(merged);
+            renderHistory();
+            alert(`成功匯入紀錄！目前共有 ${merged.length} 筆資料。`);
+          } catch (err) {
+            alert("匯入失敗：請確認選擇的是正確的 JSON 備份檔案。");
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = "";
+      });
+
+      $("btnHome").addEventListener("click", () => {
+        if (!$("viewReport").classList.contains("hidden") || !$("viewHome").classList.contains("hidden")) {
+          showView("viewHome", 0);
+        } else if (confirm("確定要返回首頁嗎？目前未完成的測驗進度將不會儲存。")) {
+          showView("viewHome", 0);
+        }
+      });
+
+      $("btnStartNew").addEventListener("click", () => {
+        const name = $("inputName").value.trim();
+        if (!name) {
+          alert("請先輸入受測者姓名或代號！");
+          $("inputName").focus();
+          return;
+        }
+        state = {
+          currentRecordId: "rec_" + Date.now(),
+          subjectName: name,
+          subjectRole: $("inputRole").value.trim(),
+          s1: { D1: [], D2: null, D3: null },
+          s2: {},
+          s3: {},
+          s4: { candA: null, candB: null, answers: {} },
+          s2Page: 0,
+          s3Page: 0,
+          computed: null
+        };
+        renderStage1();
+        showView("viewStage1", 1);
+      });
+
+      // ==========================================
+      // 6. Stage 1 渲染與驗證
+      // ==========================================
+      function renderStage1() {
+        const container = $("stage1Questions");
+        container.innerHTML = STAGE1_QUESTIONS.map((q) => {
+          const isMulti = q.type === "multi";
+          const optsHtml = q.options
+            .map((opt) => {
+              const checked = isMulti
+                ? state.s1.D1.includes(opt.val)
+                : state.s1[q.id] === opt.val;
+              return `
+                <label class="opt-card ${checked ? "selected" : ""}">
+                  <input type="${isMulti ? "checkbox" : "radio"}" name="${q.id}" value="${opt.val}" ${checked ? "checked" : ""} />
+                  <span class="opt-text">${escapeHtml(opt.text)}</span>
+                </label>
+              `;
+            })
+            .join("");
+          return `
+            <div class="q-block" id="qblock-${q.id}">
+              <div class="q-head">
+                <span class="q-num">${q.id}</span>
+                <p class="q-title">${escapeHtml(q.title)}</p>
+              </div>
+              <div class="opt-list">${optsHtml}</div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      $("stage1Questions").addEventListener("change", (e) => {
+        const input = e.target;
+        const name = input.name;
+        const val = input.value;
+        if (name === "D1") {
+          if (val === "NO_MASK" && input.checked) {
+            state.s1.D1 = ["NO_MASK"];
+          } else {
+            state.s1.D1 = state.s1.D1.filter((v) => v !== "NO_MASK");
+            if (input.checked) {
+              if (state.s1.D1.length >= 2) {
+                input.checked = false;
+                alert("D1 最多請勾選 2 項最主要的面具負荷。");
+                return;
+              }
+              state.s1.D1.push(val);
+            } else {
+              state.s1.D1 = state.s1.D1.filter((v) => v !== val);
+            }
+          }
+          renderStage1();
+        } else {
+          state.s1[name] = val;
+          renderStage1();
+        }
+      });
+
+      $("btnS1Back").addEventListener("click", () => {
+        if (confirm("返回首頁將不會儲存目前作答，確定返回？")) showView("viewHome", 0);
+      });
+
+      $("btnS1Next").addEventListener("click", () => {
+        let missing = null;
+        if (!state.s1.D1.length) missing = "D1";
+        else if (!state.s1.D2) missing = "D2";
+        else if (!state.s1.D3) missing = "D3";
+        if (missing) {
+          highlightMissing(`qblock-${missing}`);
+          return;
+        }
+        state.s2Page = 0;
+        renderStage2();
+        showView("viewStage2", 2);
+      });
+
+      function highlightMissing(blockId) {
+        document.querySelectorAll(".unanswered-highlight").forEach((el) => el.classList.remove("unanswered-highlight"));
+        const target = $(blockId);
+        if (target) {
+          target.classList.add("unanswered-highlight");
+          target.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        alert("請完成標示紅框的題目後再繼續下一階段！");
+      }
+
+      // ==========================================
+      // 7. Stage 2 渲染與驗證 (4 頁 × 5 題)
+      // ==========================================
+      const S2_GROUPS = [
+        { title: "組別一：能量互動與專注模式（Q1～Q5）", sub: "請排除社交應酬壓力，回想你自然最省力的互動方式。" },
+        { title: "組別二：資訊吸收與思考習慣（Q6～Q10）", sub: "評估你大腦接收現實訊號或抽象概念的天然偏好。" },
+        { title: "組別三：決策準則與評價方式（Q11～Q15）", sub: "測量你在無利益壓力下，做判斷時最信任的內在天秤。" },
+        { title: "組別四：生活節奏與行事架構（Q16～Q20）", sub: "評估你在私下生活中對確定性或開放彈性的偏好程度。" }
+      ];
+
+      function renderStage2() {
+        const p = state.s2Page;
+        const g = S2_GROUPS[p];
+        $("s2Title").textContent = `【階段二】${g.title}`;
+        $("s2Subtitle").textContent = g.sub;
+        $("s2PageBadge").textContent = `第 ${p + 1} / 4 組`;
+        $("btnS2Prev").textContent = p === 0 ? "← 返回階段一" : "← 上一組";
+        $("btnS2Next").textContent = p === 3 ? "進入階段三（榮格八維驗證）→" : "下一組 →";
+
+        const slice = STAGE2_QUESTIONS.slice(p * 5, p * 5 + 5);
+        $("stage2Questions").innerHTML = slice
+          .map((q) => {
+            const ans = state.s2[q.id];
+            const choices = [
+              { val: 2, label: "非常傾向 A" },
+              { val: 1, label: "稍微傾向 A" },
+              { val: -1, label: "稍微傾向 B" },
+              { val: -2, label: "非常傾向 B" }
+            ];
+            return `
+              <div class="q-block" id="qblock-${q.id}">
+                <div class="q-head">
+                  <span class="q-num">${q.id}</span>
+                  <p class="q-title">比較以下兩種狀態，哪一側更貼近「完全放鬆時」真實的你？</p>
+                </div>
+                <div class="ab-grid">
+                  <div class="ab-box"><strong>選項 A</strong><div>${escapeHtml(q.A)}</div></div>
+                  <div class="ab-box"><strong>選項 B</strong><div>${escapeHtml(q.B)}</div></div>
+                </div>
+                <div class="scale-row">
+                  ${choices
+                    .map(
+                      (c) => `
+                        <button type="button" class="scale-btn ${ans === c.val ? "selected" : ""}" data-qid="${q.id}" data-val="${c.val}">
+                          ${c.label}
+                        </button>
+                      `
+                    )
+                    .join("")}
+                </div>
+              </div>
+            `;
+          })
+          .join("");
+      }
+
+      $("stage2Questions").addEventListener("click", (e) => {
+        const btn = e.target.closest("button.scale-btn");
+        if (!btn) return;
+        const qid = btn.dataset.qid;
+        const val = Number(btn.dataset.val);
+        state.s2[qid] = val;
+        const block = $(`qblock-${qid}`);
+        block.classList.remove("unanswered-highlight");
+        block.querySelectorAll(".scale-btn").forEach((b) => {
+          b.classList.toggle("selected", Number(b.dataset.val) === val);
+        });
+      });
+
+      $("btnS2Prev").addEventListener("click", () => {
+        if (state.s2Page === 0) {
+          renderStage1();
+          showView("viewStage1", 1);
+        } else {
+          state.s2Page -= 1;
+          renderStage2();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      });
+
+      $("btnS2Next").addEventListener("click", () => {
+        const slice = STAGE2_QUESTIONS.slice(state.s2Page * 5, state.s2Page * 5 + 5);
+        const missing = slice.find((q) => state.s2[q.id] === undefined);
+        if (missing) {
+          highlightMissing(`qblock-${missing.id}`);
+          return;
+        }
+        if (state.s2Page < 3) {
+          state.s2Page += 1;
+          renderStage2();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+          state.s3Page = 0;
+          renderStage3();
+          showView("viewStage3", 3);
+        }
+      });
+
+      // ==========================================
+      // 8. Stage 3 渲染與驗證 (2 頁 × 6 題)
+      // ==========================================
+      function renderStage3() {
+        const p = state.s3Page;
+        $("s3Title").textContent = p === 0
+          ? "【階段三】認知加工與決策軸線（CF1～CF6）"
+          : "【階段三】人際機制、高壓劣勢反撲與盲點（CF7～CF12）";
+        $("s3PageBadge").textContent = `第 ${p + 1} / 2 組`;
+        $("btnS3Prev").textContent = p === 0 ? "← 返回階段二" : "← 上一組";
+        $("btnS3Next").textContent = p === 0 ? "下一組（壓力反撲與盲點）→" : "啟動雙軌交叉比對（階段四）→";
+
+        const slice = STAGE3_QUESTIONS.slice(p * 6, p * 6 + 6);
+        $("stage3Questions").innerHTML = slice
+          .map((q) => {
+            const ans = state.s3[q.id];
+            return `
+              <div class="q-block" id="qblock-${q.id}">
+                <div class="q-head">
+                  <span class="q-num">${q.id}</span>
+                  <p class="q-title">${escapeHtml(q.title)}</p>
+                </div>
+                <div class="opt-list">
+                  ${q.options
+                    .map(
+                      (opt, idx) => `
+                        <label class="opt-card ${ans === idx ? "selected" : ""}">
+                          <input type="radio" name="${q.id}" value="${idx}" ${ans === idx ? "checked" : ""} />
+                          <span class="opt-text">${escapeHtml(opt.text)}</span>
+                        </label>
+                      `
+                    )
+                    .join("")}
+                </div>
+              </div>
+            `;
+          })
+          .join("");
+      }
+
+      $("stage3Questions").addEventListener("change", (e) => {
+        const input = e.target;
+        const qid = input.name;
+        const idx = Number(input.value);
+        state.s3[qid] = idx;
+        const block = $(`qblock-${qid}`);
+        block.classList.remove("unanswered-highlight");
+        block.querySelectorAll(".opt-card").forEach((c, i) => {
+          c.classList.toggle("selected", i === idx);
+        });
+      });
+
+      $("btnS3Prev").addEventListener("click", () => {
+        if (state.s3Page === 0) {
+          state.s2Page = 3;
+          renderStage2();
+          showView("viewStage2", 2);
+        } else {
+          state.s3Page = 0;
+          renderStage3();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      });
+
+      $("btnS3Next").addEventListener("click", () => {
+        const slice = STAGE3_QUESTIONS.slice(state.s3Page * 6, state.s3Page * 6 + 6);
+        const missing = slice.find((q) => state.s3[q.id] === undefined);
+        if (missing) {
+          highlightMissing(`qblock-${missing.id}`);
+          return;
+        }
+        if (state.s3Page === 0) {
+          state.s3Page = 1;
+          renderStage3();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+          runDualTrackPreAnalysis();
+          renderStage4();
+          showView("viewStage4", 4);
+        }
+      });
+
+      // ==========================================
+      // 9. 核心雙軌交叉計分引擎 (Dual-Track Engine)
+      // ==========================================
+      function getPciLevel(absScore) {
+        if (absScore <= 2) return { code: "Slight", label: "輕微偏好（邊界）" };
+        if (absScore <= 5) return { code: "Moderate", label: "中度偏好" };
+        if (absScore <= 8) return { code: "Clear", label: "清晰偏好" };
+        return { code: "Very Clear", label: "極清晰偏好" };
+      }
+
+      function computeDualTrack() {
+        // --- 軌道二先行計算八維分數（亦可協助階段二極端 0 分破除） ---
+        const fnScores = { Ni: 0, Ne: 0, Si: 0, Se: 0, Ti: 0, Te: 0, Fi: 0, Fe: 0 };
+        const gripSignals = [];
+        let polrSignal = null;
+
+        STAGE3_QUESTIONS.forEach((q) => {
+          const idx = state.s3[q.id];
+          const opt = q.options[idx];
+          if (!opt) return;
+          Object.entries(opt.weights || {}).forEach(([fn, w]) => {
+            fnScores[fn] += w;
+          });
+          if (opt.gripDom) gripSignals.push(opt.gripDom);
+          if (opt.polr) polrSignal = opt.polr;
+        });
+
+        // 16 類型 FitScore 排序
+        const typeFits = Object.entries(TYPE_KB)
+          .map(([typeCode, info]) => {
+            const [dom, aux, tert, inf] = info.stack;
+            let fit = 3.0 * fnScores[dom] + 2.0 * fnScores[aux] + 1.0 * fnScores[tert] - 0.5 * fnScores[inf];
+            if (gripSignals.includes(dom)) fit += 5.0;
+            if (polrSignal && info.polr === polrSignal) fit += 5.0;
+            return { typeCode, fit: Number(fit.toFixed(1)) };
+          })
+          .sort((a, b) => b.fit - a.fit);
+
+        const jungTop1 = typeFits[0].typeCode;
+        const jungTop2 = typeFits[1].typeCode;
+
+        // --- 軌道一：Step II 四維度計分 ---
+        const dims = [
+          { key: "EI", left: "E", right: "I", leftLabel: "外向 E", rightLabel: "內向 I" },
+          { key: "SN", left: "S", right: "N", leftLabel: "實感 S", rightLabel: "直覺 N" },
+          { key: "TF", left: "T", right: "F", leftLabel: "思考 T", rightLabel: "情感 F" },
+          { key: "JP", left: "J", right: "P", leftLabel: "判斷 J", rightLabel: "感知 P" }
+        ];
+
+        const dimResults = {};
+        const facetDetails = [];
+
+        dims.forEach((d) => {
+          const qs = STAGE2_QUESTIONS.filter((q) => q.dim === d.key);
+          let sum = 0;
+          qs.forEach((q) => {
+            const raw = state.s2[q.id];
+            const adj = raw * q.polarity; // >0 偏向 left (E/S/T/J), <0 偏向 right (I/N/F/P)
+            sum += adj;
+            facetDetails.push({
+              id: q.id,
+              dim: d.key,
+              leftLetter: d.left,
+              rightLetter: d.right,
+              facetLeft: q.facetLeft,
+              facetRight: q.facetRight,
+              adjScore: adj,
+              oopNoteLeft: q.oopNoteLeft,
+              oopNoteRight: q.oopNoteRight
+            });
+          });
+
+          let letter;
+          let tieBroken = false;
+          if (sum > 0) letter = d.left;
+          else if (sum < 0) letter = d.right;
+          else {
+            // 平手破除規則：先看第一核心切面，若仍不足以區分再看階段三對應推導
+            tieBroken = true;
+            const firstCoreAdj = state.s2[qs[0].id] * qs[0].polarity;
+            if (firstCoreAdj > 0) letter = d.left;
+            else if (firstCoreAdj < 0) letter = d.right;
+            else {
+              const idxMap = { EI: 0, SN: 1, TF: 2, JP: 3 };
+              letter = jungTop1[idxMap[d.key]];
+            }
+          }
+
+          const absScore = Math.abs(sum);
+          const pci = getPciLevel(absScore);
+          const pct = Math.round(50 + (absScore / 10) * 50); // 50% ~ 100%
+
+          dimResults[d.key] = {
+            ...d,
+            sum,
+            absScore,
+            letter,
+            pci,
+            pct,
+            tieBroken
+          };
+        });
+
+        // 標記跨維度特例切面 (Out-of-Preference Facets)
+        const outOfPrefFacets = [];
+        facetDetails.forEach((f) => {
+          const dimRes = dimResults[f.dim];
+          const isLeftDim = dimRes.letter === f.leftLetter;
+          const isOop = (isLeftDim && f.adjScore < 0) || (!isLeftDim && f.adjScore > 0);
+          f.isOop = isOop;
+          if (isOop) {
+            outOfPrefFacets.push({
+              ...f,
+              note: isLeftDim ? f.oopNoteRight : f.oopNoteLeft
+            });
+          }
+        });
+
+        const step2Type =
+          dimResults.EI.letter +
+          dimResults.SN.letter +
+          dimResults.TF.letter +
+          dimResults.JP.letter;
+
+        return {
+          fnScores,
+          gripSignals,
+          polrSignal,
+          typeFits,
+          jungTop1,
+          jungTop2,
+          dimResults,
+          facetDetails,
+          outOfPrefFacets,
+          step2Type
+        };
+      }
+
+      function flipLetterAt(typeCode, dimKey) {
+        const map = {
+          EI: { idx: 0, E: "I", I: "E" },
+          SN: { idx: 1, S: "N", N: "S" },
+          TF: { idx: 2, T: "F", F: "T" },
+          JP: { idx: 3, J: "P", P: "J" }
+        };
+        const m = map[dimKey];
+        const arr = typeCode.split("");
+        arr[m.idx] = m[arr[m.idx]];
+        return arr.join("");
+      }
+
+      function runDualTrackPreAnalysis() {
+        const res = computeDualTrack();
+        let candA = res.step2Type;
+        let candB = res.jungTop1;
+        let conflictReason = "";
+
+        if (candA !== candB) {
+          conflictReason = `軌道一（Step II 行為偏好）初步指向一種運作結構，但軌道二（榮格八維與高壓反撲 Grip）更強烈指向另一種底層結構。這常見於「後天職場訓練」或「J/P 邊界模糊」造成的偏差。`;
+        } else {
+          // 若雙軌一致，找出 PCI 最低的邊界維度來形成對決組
+          const sortedDims = Object.values(res.dimResults).sort((a, b) => a.absScore - b.absScore);
+          const weakestDim = sortedDims[0];
+          const boundaryType = flipLetterAt(candA, weakestDim.key);
+          candB = res.jungTop2 !== candA ? res.jungTop2 : boundaryType;
+          // 如果邊界維度很弱 (<=2)，優先以該邊界翻轉型作為驗證對決組
+          if (weakestDim.absScore <= 2 && boundaryType !== candA) {
+            candB = boundaryType;
+            conflictReason = `雙軌初評一致，但在「${weakestDim.leftLabel} / ${weakestDim.rightLabel}」維度偏向輕微邊界（PCI = ${weakestDim.absScore} 分）。系統為您安排最接近的邊界對比組進行最終認證。`;
+          } else {
+            conflictReason = `雙軌初評高度一致！依據國際認證 Best-Fit 驗證標準，系統仍為您自動提取分數最接近的次高相似類型進行 3 道交叉確認，確保結果 100% 經得起推敲。`;
+          }
+        }
+
+        state.s4 = {
+          candA,
+          candB,
+          conflictReason,
+          answers: {}
+        };
+        state.computed = res;
+      }
+
+      // ==========================================
+      // 10. Stage 4 Best-Fit 對決渲染與定案
+      // ==========================================
+      function renderStage4() {
+        const { candA, candB, conflictReason } = state.s4;
+        const kbA = TYPE_KB[candA];
+        const kbB = TYPE_KB[candB];
+
+        const maskHints = [];
+        if (state.s1.D1.includes("E_MASK")) maskHints.push("高頻率外向社交面具");
+        if (state.s1.D1.includes("IT_MASK")) maskHints.push("高壓冷靜/數據獨處面具");
+        if (state.s1.D1.includes("SJ_MASK")) maskHints.push("嚴謹 SOP/時程管控面具");
+        if (state.s1.D1.includes("NPF_MASK")) maskHints.push("創意發想/情緒安撫面具");
+        const maskBanner = maskHints.length
+          ? `<br /><strong>⚠️ 階段一面具提醒：</strong>您在階段一提到日常角色需戴上「${maskHints.join("、")}」。請務必排除這些工作技能，單純憑「最真實、最不費力的自己」選擇！`
+          : "";
+
+        $("s4DiagnosticBanner").innerHTML = `<strong>交叉診斷狀態：</strong>${escapeHtml(conflictReason)}${maskBanner}`;
+
+        const duelQuestions = [
+          {
+            id: "BF1",
+            title: "BF1【核心心理驅動力與大腦運作軸】剝離職位與責任要求後，哪一種「內在引擎」更像你的真實本能？",
+            optA: `${kbA.coreDrive} ${kbA.domDesc}`,
+            optB: `${kbB.coreDrive} ${kbB.domDesc}`
+          },
+          {
+            id: "BF2",
+            title: "BF2【高壓劣勢反撲 Grip 驗證】當你被逼到絕境或長期精疲力竭時，哪一種「失控反撲畫面」最讓你感到被精準看穿？",
+            optA: kbA.gripDesc,
+            optB: kbB.gripDesc
+          },
+          {
+            id: "BF3",
+            title: "BF3【天然盲點與脫鞋模樣】完全沒人盯著你、也不必表現優秀時，哪一段對「最怕的折磨與最自然的放鬆」描述最貼近你？",
+            optA: `【天然痛點】${kbA.polrDesc} 【脫鞋模樣】${kbA.shoesOffDesc}`,
+            optB: `【天然痛點】${kbB.polrDesc} 【脫鞋模樣】${kbB.shoesOffDesc}`
+          }
+        ];
+
+        $("stage4Questions").innerHTML = duelQuestions
+          .map((dq, idx) => {
+            const ans = state.s4.answers[dq.id];
+            return `
+              <div class="q-block" id="qblock-${dq.id}">
+                <div class="q-head">
+                  <span class="q-num">對決 ${idx + 1}/3</span>
+                  <p class="q-title">${escapeHtml(dq.title)}</p>
+                </div>
+                <div class="duel-pair">
+                  <div class="duel-opt ${ans === "A" ? "selected" : ""}" data-dqid="${dq.id}" data-choice="A">
+                    <span class="duel-tag">運作模式 甲</span>
+                    <div class="opt-text">${escapeHtml(dq.optA)}</div>
+                  </div>
+                  <div class="duel-opt ${ans === "B" ? "selected" : ""}" data-dqid="${dq.id}" data-choice="B">
+                    <span class="duel-tag">運作模式 乙</span>
+                    <div class="opt-text">${escapeHtml(dq.optB)}</div>
+                  </div>
+                </div>
+              </div>
+            `;
+          })
+          .join("");
+      }
+
+      $("stage4Questions").addEventListener("click", (e) => {
+        const card = e.target.closest(".duel-opt");
+        if (!card) return;
+        const dqid = card.dataset.dqid;
+        const choice = card.dataset.choice;
+        state.s4.answers[dqid] = choice;
+        const block = $(`qblock-${dqid}`);
+        block.classList.remove("unanswered-highlight");
+        block.querySelectorAll(".duel-opt").forEach((el) => {
+          el.classList.toggle("selected", el.dataset.choice === choice);
+        });
+      });
+
+      $("btnS4Back").addEventListener("click", () => {
+        state.s3Page = 1;
+        renderStage3();
+        showView("viewStage3", 3);
+      });
+
+      $("btnS4Finish").addEventListener("click", () => {
+        const missing = ["BF1", "BF2", "BF3"].find((id) => !state.s4.answers[id]);
+        if (missing) {
+          highlightMissing(`qblock-${missing}`);
+          return;
+        }
+        const votesA = ["BF1", "BF2", "BF3"].filter((id) => state.s4.answers[id] === "A").length;
+        const bestFitType = votesA >= 2 ? state.s4.candA : state.s4.candB;
+
+        state.computed.bestFitType = bestFitType;
+        state.computed.duelVotes = { A: votesA, B: 3 - votesA, candA: state.s4.candA, candB: state.s4.candB };
+        state.computed.isConsistent = state.computed.step2Type === state.computed.jungTop1;
+
+        // 儲存至 localStorage
+        const record = {
+          id: state.currentRecordId,
+          createdAt: new Date().toISOString(),
+          subjectName: state.subjectName,
+          subjectRole: state.subjectRole,
+          s1: state.s1,
+          s2: state.s2,
+          s3: state.s3,
+          s4: state.s4,
+          computed: state.computed
+        };
+        const list = loadHistory().filter((r) => r.id !== record.id);
+        list.unshift(record);
+        saveHistory(list);
+
+        renderReport();
+        showView("viewReport", 5);
+      });
+
+      // ==========================================
+      // 11. 認證級深度報告渲染
+      // ==========================================
+      function analyzePersonaImpact(s1, bestFitType) {
+        const labels = {
+          E_MASK: "高頻率社交與公開協調要求（E 面具）",
+          IT_MASK: "獨處鑽研技術與強制冷靜客觀（I / T 面具）",
+          SJ_MASK: "嚴守時程規範與細節零容錯（S / J 面具）",
+          NPF_MASK: "高頻創意發想或情感安撫照顧（N / P / F 面具）",
+          NO_MASK: "角色與天性高度吻合"
+        };
+        const chosen = s1.D1.map((k) => labels[k]).join("、");
+        const alerts = [];
+        if (s1.D1.includes("E_MASK") && bestFitType[0] === "I") {
+          alerts.push("您的天然能量傾向為「內向 (I)」，但職場迫使您頻繁展現外向交際，下班後出現強烈的社交耗竭屬於正常現象。");
+        }
+        if (s1.D1.includes("IT_MASK") && bestFitType[2] === "F") {
+          alerts.push("您的天然決策傾向為「情感價值 (F)」，但專業環境迫使您長期使用客觀理性 (T) 工具，需注意情感需求被壓抑後的疲勞。");
+        }
+        if (s1.D1.includes("SJ_MASK") && (bestFitType[1] === "N" || bestFitType[3] === "P")) {
+          alerts.push("您天生偏向抽象或彈性運作（N/P），但日常責任要求嚴謹的時程細節執行（S/J），這是您高壓時容易感到窒息的重要來源。");
+        }
+        if (s1.D1.includes("NPF_MASK") && (bestFitType[1] === "S" || bestFitType[2] === "T")) {
+          alerts.push("您天生偏向務實或邏輯分析（S/T），但當前角色要求大量的發散創意或人際情緒勞動（N/P/F），容易造成隱性的認知消耗。");
+        }
+        const d2Map = {
+          I_ANCHOR: "完全獨處靜思",
+          E_ANCHOR: "與信任之人或外界互動",
+          MIX_ANCHOR: "動靜切換調節"
+        };
+        return {
+          chosen,
+          d2Text: d2Map[s1.D2] || "",
+          alertText: alerts.length
+            ? alerts.join(" ")
+            : "您的日常角色要求與「脫鞋自我」核心類型大致協調，因此您較不易因為扮演相反人格而產生慢性內耗。"
+        };
+      }
+
+      function renderReport() {
+        const c = state.computed;
+        const bf = c.bestFitType;
+        const kb = TYPE_KB[bf];
+        const persona = analyzePersonaImpact(state.s1, bf);
+
+        const dimKeys = ["EI", "SN", "TF", "JP"];
+        const dimBarsHtml = dimKeys
+          .map((k) => {
+            const d = c.dimResults[k];
+            const isLeft = d.letter === d.left;
+            const halfWidth = (d.absScore / 10) * 50;
+            const leftPos = isLeft ? 50 - halfWidth : 50;
+            const fillColor = isLeft ? "#1e3a8a" : "#0f766e";
+            return `
+              <div class="dim-bar-card">
+                <div class="dim-labels">
+                  <span style="${isLeft ? "color:#1e3a8a;" : "color:#64748b; font-weight:500;"}">${d.leftLabel}</span>
+                  <span>
+                    <span class="badge ${d.absScore <= 2 ? "badge-warn" : "badge-blue"}">
+                      ${d.letter} 型・${d.pct}% (${d.pci.label}${d.tieBroken ? "・平手破除" : ""})
+                    </span>
+                  </span>
+                  <span style="${!isLeft ? "color:#0f766e;" : "color:#64748b; font-weight:500;"}">${d.rightLabel}</span>
+                </div>
+                <div class="bipolar-track">
+                  <div class="bipolar-center"></div>
+                  <div class="bipolar-fill" style="left:${leftPos}%; width:${halfWidth}%; background:${fillColor};"></div>
+                </div>
+              </div>
+            `;
+          })
+          .join("");
+
+        // 20 子切面圖譜
+        const facetsHtml = dimKeys
+          .map((k) => {
+            const d = c.dimResults[k];
+            const rows = c.facetDetails
+              .filter((f) => f.dim === k)
+              .map((f) => {
+                // adjScore in [-2, -1, 1, 2]. Map +2 -> 12%, +1 -> 34%, -1 -> 66%, -2 -> 88%
+                const posMap = { "2": 12, "1": 34, "-1": 66, "-2": 88 };
+                const dotPos = posMap[String(f.adjScore)] || 50;
+                const tag = f.isOop
+                  ? `<span class="badge badge-warn">跨維度特例</span>`
+                  : `<span class="badge badge-ok">與主軸一致</span>`;
+                return `
+                  <div class="facet-row ${f.isOop ? "out-of-pref" : ""}">
+                    <div style="text-align:right; font-weight:${f.adjScore > 0 ? "700" : "400"};">${escapeHtml(f.facetLeft)} (${f.leftLetter})</div>
+                    <div class="facet-bar-wrap">
+                      <div style="position:absolute; left:50%; top:-2px; bottom:-2px; width:2px; background:#94a3b8;"></div>
+                      <div class="facet-dot" style="left:${dotPos}%;"></div>
+                    </div>
+                    <div style="font-weight:${f.adjScore < 0 ? "700" : "400"};">${escapeHtml(f.facetRight)} (${f.rightLetter})</div>
+                    <div style="text-align:right;">${tag}</div>
+                  </div>
+                `;
+              })
+              .join("");
+
+            return `
+              <div class="facet-group">
+                <div class="facet-group-head">
+                  <span>${d.leftLabel} ↔ ${d.rightLabel} 維度五子切面</span>
+                  <span>主軸結果：${d.letter}</span>
+                </div>
+                ${rows}
+              </div>
+            `;
+          })
+          .join("");
+
+        const oopSectionHtml = c.outOfPrefFacets.length
+          ? `<ul style="margin:8px 0 0; padding-left:20px;">
+              ${c.outOfPrefFacets
+                .map(
+                  (o) =>
+                    `<li style="margin-bottom:6px;"><strong>【${escapeHtml(o.facetLeft)} / ${escapeHtml(o.facetRight)}】</strong>：${escapeHtml(o.note)}</li>`
+                )
+                .join("")}
+            </ul>`
+          : `<p style="margin:6px 0 0;">您本次測驗的 20 個子切面與四大主軸高度一致，沒有出現跨維度特例，屬於非常典型且純粹的偏好分布。</p>`;
+
+        // 八維認知功能排序呈現
+        const sortedFns = Object.entries(c.fnScores).sort((a, b) => b[1] - a[1]);
+        const maxFnScore = Math.max(10, ...sortedFns.map((x) => x[1]));
+        const fnBarsHtml = sortedFns
+          .map(([fnKey, val]) => {
+            const pct = Math.max(6, Math.round((Math.max(0, val) / maxFnScore) * 100));
+            const stackIdx = kb.stack.indexOf(fnKey);
+            const roleNames = ["主導 Dominant", "輔助 Auxiliary", "第三 Tertiary", "劣勢 Inferior"];
+            let badgeHtml = "";
+            if (stackIdx !== -1) badgeHtml = `<span class="badge badge-blue">${roleNames[stackIdx]}</span>`;
+            else if (kb.polr === fnKey) badgeHtml = `<span class="badge badge-warn">第七盲點 PoLR</span>`;
+            return `
+              <div class="fn-row">
+                <div><strong>${escapeHtml(FUNCTIONS_INFO[fnKey].name)}</strong></div>
+                <div class="fn-bar-bg">
+                  <div class="fn-bar-fill" style="width:${pct}%;"></div>
+                </div>
+                <div style="text-align:right; font-weight:700;">${val} 分</div>
+              </div>
+              <div style="font-size:12px; color:var(--text-light); margin:-6px 0 10px 132px;">
+                ${escapeHtml(FUNCTIONS_INFO[fnKey].desc)} ${badgeHtml}
+              </div>
+            `;
+          })
+          .join("");
+
+        const topFitsHtml = c.typeFits
+          .slice(0, 4)
+          .map(
+            (t, idx) =>
+              `<span class="badge ${t.typeCode === bf ? "badge-ok" : "badge-blue"}" style="font-size:13px; padding:4px 10px;">
+                #${idx + 1} ${t.typeCode} (${t.fit}分)
+              </span>`
+          )
+          .join(" ");
+
+        $("reportContent").innerHTML = `
+          <div class="report-hero">
+            <div class="hero-top">
+              <div>
+                <div style="font-size:13px; opacity:0.85; margin-bottom:4px;">BEST-FIT VERIFIED TYPE・最終認證最佳契合類型</div>
+                <div class="hero-type">${escapeHtml(bf)}</div>
+                <div class="hero-title">${escapeHtml(kb.title)}</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:14px;">受測者：<strong>${escapeHtml(state.subjectName)}</strong></div>
+                <div style="font-size:13px; opacity:0.85;">角色：${escapeHtml(state.subjectRole || "未指定")}</div>
+                <div style="font-size:12px; opacity:0.75; margin-top:4px;">八維功能堆疊：${kb.stack.join(" → ")} | 盲點：${kb.polr}</div>
+              </div>
+            </div>
+            <div class="hero-metrics">
+              <div class="hero-metric-box">
+                <div class="hero-metric-label">軌道一：Step II™ 問卷報告類型</div>
+                <div class="hero-metric-val">${escapeHtml(c.step2Type)}</div>
+              </div>
+              <div class="hero-metric-box">
+                <div class="hero-metric-label">軌道二：榮格八維模型最佳匹配</div>
+                <div class="hero-metric-val">${escapeHtml(c.jungTop1)}</div>
+              </div>
+              <div class="hero-metric-box">
+                <div class="hero-metric-label">階段四：Best-Fit 對決結果</div>
+                <div class="hero-metric-val">${escapeHtml(c.duelVotes.candA)} vs ${escapeHtml(c.duelVotes.candB)}（${c.duelVotes.A}:${c.duelVotes.B} 定案）</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">一、去角色化分析與雙軌校準結果</h2>
+            </div>
+            <p><strong>核心心理驅動力：</strong>${escapeHtml(kb.coreDrive)}</p>
+            <div class="callout ${c.isConsistent ? "accent" : "warn"}">
+              <strong>雙軌一致性檢核：</strong>${
+                c.isConsistent
+                  ? `您的 Step II 行為問卷結果（${c.step2Type}）與榮格八維深層推導（${c.jungTop1}）完全一致，結果信度極高。`
+                  : `您的問卷行為偏好（${c.step2Type}）與榮格八維深層動力（${c.jungTop1}）原本存在差異，這正是專業級評測必須執行「階段四 Best-Fit 驗證」的原因。經由您親自比對核心動機、高壓反撲與盲點後，正式確立為 <strong>${bf}</strong>。`
+              }
+            </div>
+            <div class="callout">
+              <strong>職場角色面具（Persona）影響診斷：</strong><br />
+              • 目前角色負荷：${escapeHtml(persona.chosen)}<br />
+              • 脫鞋後自然回血方式：${escapeHtml(persona.d2Text)}<br />
+              • <strong>專家解讀：</strong>${escapeHtml(persona.alertText)}
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">二、Step II™ 四大維度與偏好清晰度指數（PCI）</h2>
+              <p class="card-subtitle">分數計算基於無中立選項的 4 級迫選法，衡量您的心理慣用手清晰度（非能力高低）</p>
+            </div>
+            ${dimBarsHtml}
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">三、Step II™ 20 子切面個人化圖譜（20 Facets Profile）</h2>
+              <p class="card-subtitle">精準定位您「與主流類型表現不同」的跨維度特例切面，這正是解釋「同為 ${bf} 卻各具特色」的關鍵</p>
+            </div>
+            ${facetsHtml}
+            <div class="callout warn" style="margin-top:16px; margin-bottom:0;">
+              <strong>您的「跨維度特例切面（Out-of-Preference Facets）」深度解讀：</strong>
+              ${oopSectionHtml}
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">四、榮格八維認知功能動力學與高壓防禦機制</h2>
+              <p class="card-subtitle">八維模型契合度排行：${topFitsHtml}</p>
+            </div>
+            ${fnBarsHtml}
+            <div class="stack-grid">
+              <div class="stack-card">
+                <div class="stack-role">1. 主導功能（Dominant）— 核心引擎</div>
+                <div style="font-size:14px;">${escapeHtml(kb.domDesc)}</div>
+              </div>
+              <div class="stack-card">
+                <div class="stack-role">2. 輔助功能（Auxiliary）— 平衡舵手</div>
+                <div style="font-size:14px;">${escapeHtml(kb.auxDesc)}</div>
+              </div>
+              <div class="stack-card">
+                <div class="stack-role">3. 第三功能（Tertiary）— 發展潛能</div>
+                <div style="font-size:14px;">${escapeHtml(kb.tertDesc)}</div>
+              </div>
+              <div class="stack-card">
+                <div class="stack-role">4. 劣勢功能（Inferior）— 壓力痛點</div>
+                <div style="font-size:14px;">${escapeHtml(kb.infDesc)}</div>
+              </div>
+            </div>
+            <div class="callout purple" style="margin-top:16px;">
+              <strong>高壓劣勢反撲預警（The Grip）：</strong>${escapeHtml(kb.gripDesc)}
+            </div>
+            <div class="callout warn" style="margin-bottom:0;">
+              <strong>第七盲點功能（Trickster / PoLR）：</strong>${escapeHtml(kb.polrDesc)}
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">五、脫鞋原型與個人專屬成長處方箋</h2>
+            </div>
+            <p><strong>您的「脫鞋自然狀態」：</strong>${escapeHtml(kb.shoesOffDesc)}</p>
+            <ul style="padding-left:20px; margin:12px 0 0;">
+              ${kb.growthAdvice.map((adv) => `<li style="margin-bottom:8px;">${escapeHtml(adv)}</li>`).join("")}
+            </ul>
+          </div>
+        `;
+      }
+
+      // ==========================================
+      // 12. 報告工具列與分享連結匯入/匯出功能
+      // ==========================================
+      async function copyTextToClipboard(text, successMsg) {
+        try {
+          await navigator.clipboard.writeText(text);
+          alert(successMsg);
+        } catch (err) {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+          alert(successMsg);
+        }
+      }
+
+      $("btnPrint").addEventListener("click", () => window.print());
+
+      $("btnShareUrl").addEventListener("click", async () => {
+        const payload = {
+          n: state.subjectName,
+          r: state.subjectRole,
+          t: new Date().toISOString(),
+          d1: state.s1.D1,
+          d2: state.s1.D2,
+          d3: state.s1.D3,
+          s2: STAGE2_QUESTIONS.map((q) => state.s2[q.id]),
+          s3: STAGE3_QUESTIONS.map((q) => state.s3[q.id]),
+          s4: [state.s4.candA, state.s4.candB, state.s4.answers.BF1, state.s4.answers.BF2, state.s4.answers.BF3]
+        };
+        const code = btoa(encodeURIComponent(JSON.stringify(payload)));
+        const baseUrl = window.location.href.split("#")[0];
+        const shareUrl = `${baseUrl}#r=${code}`;
+        await copyTextToClipboard(
+          shareUrl,
+          "已複製專屬結果連結！請直接貼給施測者，對方點開即可查看您的完整圖表報告。"
+        );
+      });
+
+      $("btnCopyMd").addEventListener("click", async () => {
+        const c = state.computed;
+        const bf = c.bestFitType;
+        const kb = TYPE_KB[bf];
+        const persona = analyzePersonaImpact(state.s1, bf);
+        const dimLines = ["EI", "SN", "TF", "JP"]
+          .map((k) => {
+            const d = c.dimResults[k];
+            return `- **${d.leftLabel} / ${d.rightLabel}**：${d.letter} 型（${d.pct}%・${d.pci.label}）`;
+          })
+          .join("\n");
+        const oopLines = c.outOfPrefFacets.length
+          ? c.outOfPrefFacets.map((o) => `- **${o.facetLeft}/${o.facetRight}**：${o.note}`).join("\n")
+          : "- 無跨維度特例切面";
+
+        const md = [
+          `# MBTI® 專業認證架構深度評測報告`,
+          `- **受測者**：${state.subjectName}（${state.subjectRole || "未填寫角色"}）`,
+          `- **最終認證類型（Best-Fit Type）**：**${bf} — ${kb.title}**`,
+          `- **雙軌比對**：Step II 問卷初評 \`${c.step2Type}\` | 榮格八維最佳匹配 \`${c.jungTop1}\` | 對決確認 ${c.duelVotes.A}:${c.duelVotes.B}`,
+          ``,
+          `## 一、核心心理驅動力與角色面具分析`,
+          `${kb.coreDrive}`,
+          `- **面具影響診斷**：${persona.alertText}`,
+          ``,
+          `## 二、四大維度與偏好清晰度（PCI）`,
+          dimLines,
+          ``,
+          `## 三、跨維度特例切面（Out-of-Preference Facets）`,
+          oopLines,
+          ``,
+          `## 四、榮格八維功能堆疊（${kb.stack.join(" → ")}）`,
+          `- **主導**：${kb.domDesc}`,
+          `- **輔助**：${kb.auxDesc}`,
+          `- **第三**：${kb.tertDesc}`,
+          `- **劣勢**：${kb.infDesc}`,
+          `- **高壓反撲（The Grip）**：${kb.gripDesc}`,
+          `- **第七盲點（PoLR）**：${kb.polrDesc}`,
+          ``,
+          `## 五、成長建議`,
+          ...kb.growthAdvice.map((a, i) => `${i + 1}. ${a}`)
+        ].join("\n");
+
+        await copyTextToClipboard(md, "已複製完整 Markdown 報告至剪貼簿！");
+      });
+
+      $("btnNextSubject").addEventListener("click", () => {
+        $("inputName").value = "";
+        $("inputRole").value = "";
+        showView("viewHome", 0);
+      });
+
+      function loadResultFromHash() {
+        const hash = window.location.hash || "";
+        if (!hash.startsWith("#r=")) return false;
+        try {
+          const code = hash.slice(3);
+          const payload = JSON.parse(decodeURIComponent(atob(code)));
+          if (
+            !payload ||
+            !Array.isArray(payload.s2) ||
+            !Array.isArray(payload.s3) ||
+            !Array.isArray(payload.s4) ||
+            !TYPE_KB[payload.s4[0]] ||
+            !TYPE_KB[payload.s4[1]]
+          ) {
+            return false;
+          }
+
+          const s2Map = {};
+          STAGE2_QUESTIONS.forEach((q, idx) => {
+            s2Map[q.id] = payload.s2[idx];
+          });
+          const s3Map = {};
+          STAGE3_QUESTIONS.forEach((q, idx) => {
+            s3Map[q.id] = payload.s3[idx];
+          });
+
+          const recId = "shared_" + (payload.t || "").replace(/[^0-9]/g, "") + "_" + encodeURIComponent(payload.n || "user").slice(0, 12);
+          state = {
+            currentRecordId: recId,
+            subjectName: payload.n || "遠端受測者",
+            subjectRole: payload.r || "",
+            s1: { D1: payload.d1 || [], D2: payload.d2 || null, D3: payload.d3 || null },
+            s2: s2Map,
+            s3: s3Map,
+            s4: {
+              candA: payload.s4[0],
+              candB: payload.s4[1],
+              conflictReason: "",
+              answers: { BF1: payload.s4[2], BF2: payload.s4[3], BF3: payload.s4[4] }
+            },
+            s2Page: 0,
+            s3Page: 0,
+            computed: null
+          };
+
+          const computed = computeDualTrack();
+          const votesA = ["BF1", "BF2", "BF3"].filter((id) => state.s4.answers[id] === "A").length;
+          computed.bestFitType = votesA >= 2 ? state.s4.candA : state.s4.candB;
+          computed.duelVotes = { A: votesA, B: 3 - votesA, candA: state.s4.candA, candB: state.s4.candB };
+          computed.isConsistent = computed.step2Type === computed.jungTop1;
+          state.computed = computed;
+
+          const record = {
+            id: recId,
+            createdAt: payload.t || new Date().toISOString(),
+            subjectName: state.subjectName,
+            subjectRole: state.subjectRole,
+            s1: state.s1,
+            s2: state.s2,
+            s3: state.s3,
+            s4: state.s4,
+            computed: state.computed
+          };
+          const list = loadHistory().filter((r) => r.id !== recId);
+          list.unshift(record);
+          saveHistory(list);
+
+          renderReport();
+          showView("viewReport", 5);
+          return true;
+        } catch (err) {
+          console.error("Failed to parse shared result hash:", err);
+          return false;
+        }
+      }
+
+      window.addEventListener("hashchange", loadResultFromHash);
+
+      // 初始化
+      if (!loadResultFromHash()) {
+        renderHistory();
+        showView("viewHome", 0);
+      }
+    })();
+  </script>
+</body>
+</html>
