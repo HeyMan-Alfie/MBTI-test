@@ -836,8 +836,9 @@
     <!-- VIEW: REPORT -->
     <section id="viewReport" class="hidden">
       <div class="report-toolbar">
-        <button class="btn btn-primary" id="btnShareUrl" type="button">🔗 複製結果回傳連結（傳給施測者）</button>
-        <button class="btn btn-accent" id="btnCopyMd" type="button">複製 Markdown 文字報告</button>
+        <button class="btn btn-primary" id="btnScrollAiCoach" type="button">🤖 產生 AI 1對1顧問深聊提示詞</button>
+        <button class="btn btn-accent" id="btnShareUrl" type="button">🔗 複製結果回傳連結（傳給施測者）</button>
+        <button class="btn btn-outline" id="btnCopyMd" type="button">複製 Markdown 文字報告</button>
         <button class="btn btn-outline" id="btnPrint" type="button">列印 / 另存 PDF 報告</button>
         <button class="btn btn-outline" id="btnNextSubject" type="button">儲存並測試下一位受測者</button>
       </div>
@@ -1414,8 +1415,8 @@
           options: [
             { text: "我像個雷達，走進房間就能瞬間讀懂空氣與別人的情緒起伏，並會本能調整言行去照顧現場氣氛（有時忽略自己想要什麼）。", weights: { Fe: 3 } },
             { text: "我的情緒與價值觀像深海冰山，對「虛偽或迎合氣氛」極為敏感，優先忠於自己真實的感受，不易為合群而勉強表態。", weights: { Fi: 3 } },
-            { text: "在討論公事時，對方的情緒反應常讓我覺得干擾判斷，我更希望直接就事論事解決問題。", weights: { Te: 2, Ti: 1 } },
-            { text: "我不太擅長讀空氣或處理複雜的人際情緒暗示，常不小心講出過於直白精準但讓現場氣氛凍結的話。", weights: { Ti: 2, Te: 1 } }
+            { text: "在討論公事時，對方的情緒反應常讓我覺得干擾判斷，我更希望直接就事論事解決問題。", weights: { Te: 2, Ti: 1, Fe: -1 } },
+            { text: "我不太擅長讀空氣或處理複雜的人際情緒暗示，常不小心講出過於直白精準但讓現場氣氛凍結的話。", weights: { Ti: 2, Te: 1, Fe: -2 } }
           ]
         },
         {
@@ -1963,8 +1964,42 @@
         return { code: "Very Clear", label: "極清晰偏好" };
       }
 
+      const OPPOSITE_ATTITUDE_FN = {
+        Ni: "Ne", Ne: "Ni", Si: "Se", Se: "Si",
+        Ti: "Te", Te: "Ti", Fi: "Fe", Fe: "Fi"
+      };
+
+      function applyBestFitCalibration(computed, bestFitType) {
+        computed.bestFitType = bestFitType;
+        const dimOrder = ["EI", "SN", "TF", "JP"];
+        const outOfPrefFacets = [];
+
+        dimOrder.forEach((dimKey, idx) => {
+          const d = computed.dimResults[dimKey];
+          const verifiedLetter = bestFitType[idx];
+          d.verifiedLetter = verifiedLetter;
+          d.isCrossCalibrated = d.letter !== verifiedLetter;
+        });
+
+        computed.facetDetails.forEach((f) => {
+          const dimRes = computed.dimResults[f.dim];
+          const activeLetter = dimRes.verifiedLetter || dimRes.letter;
+          const isLeftDim = activeLetter === f.leftLetter;
+          const isOop = (isLeftDim && f.adjScore < 0) || (!isLeftDim && f.adjScore > 0);
+          f.isOop = isOop;
+          if (isOop) {
+            outOfPrefFacets.push({
+              ...f,
+              note: isLeftDim ? f.oopNoteRight : f.oopNoteLeft
+            });
+          }
+        });
+
+        computed.outOfPrefFacets = outOfPrefFacets;
+      }
+
       function computeDualTrack() {
-        // --- 軌道二先行計算八維分數（亦可協助階段二極端 0 分破除） ---
+        // --- 軌道二先行計算八維分數（含 PoLR 第七盲點、Demon 第八消耗功能與去角色化錨點校準） ---
         const fnScores = { Ni: 0, Ne: 0, Si: 0, Se: 0, Ti: 0, Te: 0, Fi: 0, Fe: 0 };
         const gripSignals = [];
         let polrSignal = null;
@@ -1984,9 +2019,28 @@
         const typeFits = Object.entries(TYPE_KB)
           .map(([typeCode, info]) => {
             const [dom, aux, tert, inf] = info.stack;
+            const demon = OPPOSITE_ATTITUDE_FN[inf];
             let fit = 3.0 * fnScores[dom] + 2.0 * fnScores[aux] + 1.0 * fnScores[tert] - 0.5 * fnScores[inf];
+
+            // 高壓劣勢反撲 Grip 主導吻合加權
             if (gripSignals.includes(dom)) fit += 5.0;
-            if (polrSignal && info.polr === polrSignal) fit += 5.0;
+
+            // 第七盲點 (PoLR) 與第八消耗功能 (Demon) 雙向檢核：若某功能為最痛苦折磨，絕不可能是其第一主導或第二輔助功能
+            if (polrSignal) {
+              if (info.polr === polrSignal) fit += 5.0;
+              if (demon === polrSignal) fit += 3.5;
+              if (dom === polrSignal) fit -= 8.0;
+              if (aux === polrSignal) fit -= 4.0;
+            }
+
+            // 階段一去角色化原生錨點校準 (D2 脫鞋回血 + D3 青少年未受職場塑形前本能)
+            if (state.s1.D2 === "I_ANCHOR" && typeCode[0] === "I") fit += 2.5;
+            if (state.s1.D2 === "E_ANCHOR" && typeCode[0] === "E") fit += 2.5;
+            if (state.s1.D3 === "S_EARLY" && typeCode[1] === "S") fit += 2.0;
+            if (state.s1.D3 === "N_EARLY" && typeCode[1] === "N") fit += 2.0;
+            if (state.s1.D3 === "T_EARLY" && typeCode[2] === "T") fit += 2.0;
+            if (state.s1.D3 === "F_EARLY" && typeCode[2] === "F") fit += 2.0;
+
             return { typeCode, fit: Number(fit.toFixed(1)) };
           })
           .sort((a, b) => b.fit - a.fit);
@@ -2030,7 +2084,6 @@
           if (sum > 0) letter = d.left;
           else if (sum < 0) letter = d.right;
           else {
-            // 平手破除規則：先看第一核心切面，若仍不足以區分再看階段三對應推導
             tieBroken = true;
             const firstCoreAdj = state.s2[qs[0].id] * qs[0].polarity;
             if (firstCoreAdj > 0) letter = d.left;
@@ -2043,32 +2096,19 @@
 
           const absScore = Math.abs(sum);
           const pci = getPciLevel(absScore);
-          const pct = Math.round(50 + (absScore / 10) * 50); // 50% ~ 100%
+          const pct = Math.round(50 + (absScore / 10) * 50);
 
           dimResults[d.key] = {
             ...d,
             sum,
             absScore,
             letter,
+            verifiedLetter: letter,
+            isCrossCalibrated: false,
             pci,
             pct,
             tieBroken
           };
-        });
-
-        // 標記跨維度特例切面 (Out-of-Preference Facets)
-        const outOfPrefFacets = [];
-        facetDetails.forEach((f) => {
-          const dimRes = dimResults[f.dim];
-          const isLeftDim = dimRes.letter === f.leftLetter;
-          const isOop = (isLeftDim && f.adjScore < 0) || (!isLeftDim && f.adjScore > 0);
-          f.isOop = isOop;
-          if (isOop) {
-            outOfPrefFacets.push({
-              ...f,
-              note: isLeftDim ? f.oopNoteRight : f.oopNoteLeft
-            });
-          }
         });
 
         const step2Type =
@@ -2077,7 +2117,7 @@
           dimResults.TF.letter +
           dimResults.JP.letter;
 
-        return {
+        const computed = {
           fnScores,
           gripSignals,
           polrSignal,
@@ -2086,9 +2126,12 @@
           jungTop2,
           dimResults,
           facetDetails,
-          outOfPrefFacets,
+          outOfPrefFacets: [],
           step2Type
         };
+
+        applyBestFitCalibration(computed, step2Type);
+        return computed;
       }
 
       function flipLetterAt(typeCode, dimKey) {
@@ -2111,14 +2154,12 @@
         let conflictReason = "";
 
         if (candA !== candB) {
-          conflictReason = `軌道一（Step II 行為偏好）初步指向一種運作結構，但軌道二（榮格八維與高壓反撲 Grip）更強烈指向另一種底層結構。這常見於「後天職場訓練」或「J/P 邊界模糊」造成的偏差。`;
+          conflictReason = `軌道一（Step II 行為偏好）初步指向一種運作結構，但軌道二（榮格八維與高壓反撲 Grip）更強烈指向另一種底層結構。這常見於「後天職場訓練（如工程師/管理職 Te 務實化）」或「J/P 邊界模糊」造成的偏差。`;
         } else {
-          // 若雙軌一致，找出 PCI 最低的邊界維度來形成對決組
           const sortedDims = Object.values(res.dimResults).sort((a, b) => a.absScore - b.absScore);
           const weakestDim = sortedDims[0];
           const boundaryType = flipLetterAt(candA, weakestDim.key);
           candB = res.jungTop2 !== candA ? res.jungTop2 : boundaryType;
-          // 如果邊界維度很弱 (<=2)，優先以該邊界翻轉型作為驗證對決組
           if (weakestDim.absScore <= 2 && boundaryType !== candA) {
             candB = boundaryType;
             conflictReason = `雙軌初評一致，但在「${weakestDim.leftLabel} / ${weakestDim.rightLabel}」維度偏向輕微邊界（PCI = ${weakestDim.absScore} 分）。系統為您安排最接近的邊界對比組進行最終認證。`;
@@ -2229,11 +2270,10 @@
         const votesA = ["BF1", "BF2", "BF3"].filter((id) => state.s4.answers[id] === "A").length;
         const bestFitType = votesA >= 2 ? state.s4.candA : state.s4.candB;
 
-        state.computed.bestFitType = bestFitType;
+        applyBestFitCalibration(state.computed, bestFitType);
         state.computed.duelVotes = { A: votesA, B: 3 - votesA, candA: state.s4.candA, candB: state.s4.candB };
         state.computed.isConsistent = state.computed.step2Type === state.computed.jungTop1;
 
-        // 儲存至 localStorage
         const record = {
           id: state.currentRecordId,
           createdAt: new Date().toISOString(),
@@ -2254,7 +2294,7 @@
       });
 
       // ==========================================
-      // 11. 認證級深度報告渲染
+      // 11. 認證級深度報告渲染 + AI 1對1顧問深聊產生器
       // ==========================================
       function analyzePersonaImpact(s1, bestFitType) {
         const labels = {
@@ -2272,6 +2312,9 @@
         if (s1.D1.includes("IT_MASK") && bestFitType[2] === "F") {
           alerts.push("您的天然決策傾向為「情感價值 (F)」，但專業環境迫使您長期使用客觀理性 (T) 工具，需注意情感需求被壓抑後的疲勞。");
         }
+        if (s1.D1.includes("IT_MASK") && bestFitType[1] === "N" && bestFitType[2] === "T") {
+          alerts.push("身為技術/工程理性工作者，您強大的輔助/主導 Te（看重數據、可行性與最小成本落地）常在一般量表中被誤判為 S（實感），但您底層的核心引擎其實是 N（直覺架構洞察）。");
+        }
         if (s1.D1.includes("SJ_MASK") && (bestFitType[1] === "N" || bestFitType[3] === "P")) {
           alerts.push("您天生偏向抽象或彈性運作（N/P），但日常責任要求嚴謹的時程細節執行（S/J），這是您高壓時容易感到窒息的重要來源。");
         }
@@ -2279,23 +2322,150 @@
           alerts.push("您天生偏向務實或邏輯分析（S/T），但當前角色要求大量的發散創意或人際情緒勞動（N/P/F），容易造成隱性的認知消耗。");
         }
         const d2Map = {
-          I_ANCHOR: "完全獨處靜思",
-          E_ANCHOR: "與信任之人或外界互動",
+          I_ANCHOR: "完全獨處靜思（I 原生錨點）",
+          E_ANCHOR: "與信任之人或外界互動（E 原生錨點）",
           MIX_ANCHOR: "動靜切換調節"
+        };
+        const d3Map = {
+          S_EARLY: "注重實際步驟與動手實作（S 青少年原生本能）",
+          N_EARLY: "跳躍奇思妙想與追問背後意義（N 青少年原生本能）",
+          T_EARLY: "天然先看邏輯對錯與因果結構（T 青少年原生本能）",
+          F_EARLY: "天然先顧慮他人感受與價值認同（F 青少年原生本能）"
         };
         return {
           chosen,
           d2Text: d2Map[s1.D2] || "",
+          d3Text: d3Map[s1.D3] || "",
           alertText: alerts.length
             ? alerts.join(" ")
             : "您的日常角色要求與「脫鞋自我」核心類型大致協調，因此您較不易因為扮演相反人格而產生慢性內耗。"
         };
       }
 
+      function buildAiDeepDivePrompt() {
+        const c = state.computed;
+        const bf = c.bestFitType;
+        const kb = TYPE_KB[bf];
+        const persona = analyzePersonaImpact(state.s1, bf);
+
+        const checkedTopics = [];
+        document.querySelectorAll(".ai-topic-cb:checked").forEach((cb) => {
+          checkedTopics.push(cb.dataset.label);
+        });
+        const customQEl = document.getElementById("aiCustomQuestion");
+        const customQ = customQEl ? customQEl.value.trim() : "";
+
+        const dimSummary = ["EI", "SN", "TF", "JP"]
+          .map((k) => {
+            const d = c.dimResults[k];
+            const calNote = d.isCrossCalibrated
+              ? `【🔄跨軌校準：表面問卷得分為 ${d.letter} (${d.sum > 0 ? "+" : ""}${d.sum})，經榮格八維與 Best-Fit 驗證定案為 ${d.verifiedLetter}】`
+              : `（問卷與最終定案一致）`;
+            return `- ${d.leftLabel} vs ${d.rightLabel}：定案 **${d.verifiedLetter}**｜問卷原始分 ${d.sum > 0 ? "+" : ""}${d.sum} (${d.pct}%・${d.pci.label}) ${calNote}`;
+          })
+          .join("\n");
+
+        const allFacetsLines = c.facetDetails
+          .map((f) => {
+            const pole = f.adjScore > 0 ? `${f.facetLeft}(${f.leftLetter})` : `${f.facetRight}(${f.rightLetter})`;
+            const strength = Math.abs(f.adjScore) === 2 ? "強傾向(±2)" : "微傾向(±1)";
+            const oopTag = f.isOop ? " 🌟【跨維度特例 Out-of-Preference】" : "";
+            return `  * ${f.id} [${f.facetLeft} vs ${f.facetRight}]：偏向 **${pole}** (${strength}, 校正分:${f.adjScore > 0 ? "+" : ""}${f.adjScore})${oopTag}`;
+          })
+          .join("\n");
+
+        const oopSummary = c.outOfPrefFacets.length
+          ? c.outOfPrefFacets.map((o) => `- 🌟 **${o.id}【${o.facetLeft} / ${o.facetRight}】**：${o.note}`).join("\n")
+          : "- 無跨維度特例（20 子切面與四字母主軸完全一致）";
+
+        const fnLines = Object.entries(c.fnScores)
+          .sort((a, b) => b[1] - a[1])
+          .map(([fn, score], i) => `  ${i + 1}. **${FUNCTIONS_INFO[fn].name}**：${score > 0 ? "+" : ""}${score} 分`)
+          .join("\n");
+
+        const cf9Opt = STAGE3_QUESTIONS[8].options[state.s3.CF9];
+        const cf10Opt = STAGE3_QUESTIONS[9].options[state.s3.CF10];
+        const cf11Opt = STAGE3_QUESTIONS[10].options[state.s3.CF11];
+        const cf12Opt = STAGE3_QUESTIONS[11].options[state.s3.CF12];
+
+        const topFitsLine = c.typeFits
+          .slice(0, 5)
+          .map((t, i) => `#${i + 1} ${t.typeCode} (${t.fit}分)`)
+          .join(" ｜ ");
+
+        return [
+          `# Role & Mission：MBTI® Step II™ 國際認證施測師與榮格分析顧問（1 對 1 深度解讀模式）`,
+          `你現在是一位擁有國際認證資格的 **MBTI® Step II™ 大師級施測師（Master Practitioner）與榮格八維心理學顧問**。`,
+          `我剛剛在「確定性雙軌 MBTI 專業評測系統」完成了全部 38 道標準化題目，並確立了我的 **Best-Fit Type（最佳契合類型）**。`,
+          ``,
+          `請注意以下顧問紀律：`,
+          `1. **以實測數據為唯一基準**：下方所有分數均由確定性程式演算法算出，請勿推翻我的 Best-Fit Type（**${bf}**），而是深入解析為何我會呈現這樣的「雙軌數據、角色面具與跨維度特例組合」。`,
+          `2. **拒絕空泛套話**：嚴禁給出網路上誰都適用的星座式描述！你的每一項建議都必須具體引用我下方的 **「階段一角色面具（D1~D3）」**、**「Step II 20 子切面中的跨維度特例（Out-of-Preference Facets）」** 以及 **「榮格八維分數與高壓 Grip / PoLR 盲點反應」**。`,
+          `3. **開啟 1 對 1 教練式對話**：在提供完整深度的分析後，請在回覆結尾**主動向我提出 3 個一針見血的教練式提問（Coaching Questions）**，引導我與你展開針對職涯、感情或個人盲點的連續深度對談。`,
+          ``,
+          `---`,
+          ``,
+          `# 📊 受測者完整實測遙測數據（Full Psychometric Telemetry）`,
+          `- **受測者姓名/代號**：${state.subjectName}`,
+          `- **目前職業與生活角色**：${state.subjectRole || "未填寫"}`,
+          `- **最終認證最佳契合類型（Best-Fit Verified Type）**：**${bf} — ${kb.title}**`,
+          `- **標準八維功能堆疊**：主導 \`${kb.stack[0]}\` → 輔助 \`${kb.stack[1]}\` → 第三 \`${kb.stack[2]}\` → 劣勢 \`${kb.stack[3]}\`｜第七盲點(PoLR)：\`${kb.polr}\`｜第八消耗(Demon)：\`${OPPOSITE_ATTITUDE_FN[kb.stack[3]]}\``,
+          `- **雙軌交叉檢核紀錄**：`,
+          `  * 軌道一（Step II 表面行為問卷初評）：\`${c.step2Type}\``,
+          `  * 軌道二（榮格八維模型契合度前 5 名）：${topFitsLine}`,
+          `  * 階段四（Best-Fit 對決投票）：\`${c.duelVotes.candA}\` vs \`${c.duelVotes.candB}\`（投票比 ${c.duelVotes.A} : ${c.duelVotes.B}，最終確立 **${bf}**）`,
+          ``,
+          `## 【階段一】去角色化校準與原生本能錨點（De-roling Baseline）`,
+          `- **D1 日常/職場被迫戴上的角色面具**：${persona.chosen}`,
+          `- **D2 撤除外部要求後的脫鞋回血方式**：${persona.d2Text}`,
+          `- **D3 12～18歲未被職場塑形前的原生本能**：${persona.d3Text}`,
+          `- **系統面具干擾初判**：${persona.alertText}`,
+          ``,
+          `## 【階段二】Step II™ 四大維度與 20 子切面完整得分`,
+          `### 1. 四大維度總覽`,
+          dimSummary,
+          ``,
+          `### 2. 20 個子切面逐題反應明細`,
+          allFacetsLines,
+          ``,
+          `### 3. 🌟 跨維度特例切面（Out-of-Preference Facets，解釋我與一般 ${bf} 不同的獨特個性）`,
+          oopSummary,
+          ``,
+          `## 【階段三】榮格八維認知功能得分與高壓防禦/盲點實測`,
+          `### 1. 八維功能原始得分排行`,
+          fnLines,
+          ``,
+          `### 2. 高壓劣勢反撲（The Grip）、心流與最痛苦盲點（PoLR/Demon）實測選擇`,
+          `- **CF9 感知軸高壓崩潰反應**：${cf9Opt ? cf9Opt.text : "-"}`,
+          `- **CF10 判斷軸高壓防禦反應**：${cf10Opt ? cf10Opt.text : "-"}`,
+          `- **CF11 核心心流狀態（Dominant Flow）**：${cf11Opt ? cf11Opt.text : "-"}`,
+          `- **CF12 最痛苦的強制要求（盲點功能 \`${c.polrSignal}\`）**：${cf12Opt ? cf12Opt.text : "-"}`,
+          ``,
+          `---`,
+          ``,
+          `# 🎯 本次 1 對 1 顧問深聊指定主題`,
+          `請以我的上述完整數據為基礎，針對以下我勾選的主題進行深度剖析：`,
+          ...(checkedTopics.length
+            ? checkedTopics.map((t, i) => `${i + 1}. **${t}**`)
+            : [`1. **全方位深度剖析（職涯策略、感情人際、跨維度特例與高壓管理）**`]),
+          ...(customQ
+            ? [
+                ``,
+                `### 💬 我想特別請教你（AI 顧問）的具體問題 / 目前處境：`,
+                `> ${customQ}`
+              ]
+            : []),
+          ``,
+          `請先為我提供結構清晰、直指核心的深度顧問報告，並在最後提出 **3 個針對我個人特質與盲點的深度追問**，讓我們開始 1 對 1 對談！`
+        ].join("\n");
+      }
+
       function renderReport() {
         const c = state.computed;
         const bf = c.bestFitType;
         const kb = TYPE_KB[bf];
+        // 確保舊紀錄載入時也已完成跨軌校準與特例重算
+        applyBestFitCalibration(c, bf);
         const persona = analyzePersonaImpact(state.s1, bf);
 
         const dimKeys = ["EI", "SN", "TF", "JP"];
@@ -2306,14 +2476,18 @@
             const halfWidth = (d.absScore / 10) * 50;
             const leftPos = isLeft ? 50 - halfWidth : 50;
             const fillColor = isLeft ? "#1e3a8a" : "#0f766e";
+            const calBadge = d.isCrossCalibrated
+              ? `<span class="badge badge-purple" style="margin-left:6px;">🔄 跨軌校準定案：${d.verifiedLetter} 型（底層八維主軸）</span>`
+              : "";
             return `
               <div class="dim-bar-card">
                 <div class="dim-labels">
                   <span style="${isLeft ? "color:#1e3a8a;" : "color:#64748b; font-weight:500;"}">${d.leftLabel}</span>
                   <span>
                     <span class="badge ${d.absScore <= 2 ? "badge-warn" : "badge-blue"}">
-                      ${d.letter} 型・${d.pct}% (${d.pci.label}${d.tieBroken ? "・平手破除" : ""})
+                      問卷初評 ${d.letter}・${d.pct}% (${d.pci.label}${d.tieBroken ? "・平手破除" : ""})
                     </span>
+                    ${calBadge}
                   </span>
                   <span style="${!isLeft ? "color:#0f766e;" : "color:#64748b; font-weight:500;"}">${d.rightLabel}</span>
                 </div>
@@ -2326,19 +2500,19 @@
           })
           .join("");
 
-        // 20 子切面圖譜
+        // 20 子切面圖譜（以最終認證 Best-Fit 主軸為基準標示跨維度特例）
         const facetsHtml = dimKeys
           .map((k) => {
             const d = c.dimResults[k];
+            const activeLetter = d.verifiedLetter || d.letter;
             const rows = c.facetDetails
               .filter((f) => f.dim === k)
               .map((f) => {
-                // adjScore in [-2, -1, 1, 2]. Map +2 -> 12%, +1 -> 34%, -1 -> 66%, -2 -> 88%
                 const posMap = { "2": 12, "1": 34, "-1": 66, "-2": 88 };
                 const dotPos = posMap[String(f.adjScore)] || 50;
                 const tag = f.isOop
-                  ? `<span class="badge badge-warn">跨維度特例</span>`
-                  : `<span class="badge badge-ok">與主軸一致</span>`;
+                  ? `<span class="badge badge-warn">🌟 跨維度特例</span>`
+                  : `<span class="badge badge-ok">與定案主軸一致</span>`;
                 return `
                   <div class="facet-row ${f.isOop ? "out-of-pref" : ""}">
                     <div style="text-align:right; font-weight:${f.adjScore > 0 ? "700" : "400"};">${escapeHtml(f.facetLeft)} (${f.leftLetter})</div>
@@ -2353,11 +2527,15 @@
               })
               .join("");
 
+            const axisStatus = d.isCrossCalibrated
+              ? `認證主軸：${activeLetter}（表面問卷：${d.letter}）`
+              : `認證主軸：${activeLetter}`;
+
             return `
               <div class="facet-group">
                 <div class="facet-group-head">
                   <span>${d.leftLabel} ↔ ${d.rightLabel} 維度五子切面</span>
-                  <span>主軸結果：${d.letter}</span>
+                  <span>${axisStatus}</span>
                 </div>
                 ${rows}
               </div>
@@ -2370,7 +2548,7 @@
               ${c.outOfPrefFacets
                 .map(
                   (o) =>
-                    `<li style="margin-bottom:6px;"><strong>【${escapeHtml(o.facetLeft)} / ${escapeHtml(o.facetRight)}】</strong>：${escapeHtml(o.note)}</li>`
+                    `<li style="margin-bottom:6px;"><strong>${o.id}【${escapeHtml(o.facetLeft)} / ${escapeHtml(o.facetRight)}】</strong>：${escapeHtml(o.note)}</li>`
                 )
                 .join("")}
             </ul>`
@@ -2379,6 +2557,7 @@
         // 八維認知功能排序呈現
         const sortedFns = Object.entries(c.fnScores).sort((a, b) => b[1] - a[1]);
         const maxFnScore = Math.max(10, ...sortedFns.map((x) => x[1]));
+        const demonFn = OPPOSITE_ATTITUDE_FN[kb.stack[3]];
         const fnBarsHtml = sortedFns
           .map(([fnKey, val]) => {
             const pct = Math.max(6, Math.round((Math.max(0, val) / maxFnScore) * 100));
@@ -2387,6 +2566,7 @@
             let badgeHtml = "";
             if (stackIdx !== -1) badgeHtml = `<span class="badge badge-blue">${roleNames[stackIdx]}</span>`;
             else if (kb.polr === fnKey) badgeHtml = `<span class="badge badge-warn">第七盲點 PoLR</span>`;
+            else if (demonFn === fnKey) badgeHtml = `<span class="badge badge-purple">第八底層消耗 Demon</span>`;
             return `
               <div class="fn-row">
                 <div><strong>${escapeHtml(FUNCTIONS_INFO[fnKey].name)}</strong></div>
@@ -2442,6 +2622,49 @@
             </div>
           </div>
 
+          <!-- AI 1對1 顧問級深聊交接面板 -->
+          <div class="card no-print" id="aiCoachCard" style="border:2px solid #1e3a8a; background:linear-gradient(180deg, #f8faff 0%, #ffffff 100%);">
+            <div class="card-header">
+              <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                <h2 class="card-title" style="color:var(--primary);">🤖 將報告交給 AI 進行「1 對 1 認證顧問級深聊」</h2>
+                <span class="badge badge-blue">含 38 題完整遙測數據自動打包</span>
+              </div>
+              <p class="card-subtitle">本網站已完成 100% 確定性雙軌計分與子切面定位。勾選您想深聊的主題並複製下方「AI 顧問超級提示詞」貼給任何 AI（ChatGPT / Claude / Gemini），即可針對您的跨維度特例、職涯與感情展開深度諮詢。</p>
+            </div>
+            <div class="form-group">
+              <label class="form-label">1. 選擇您希望 AI 顧問為您深入剖析的主題（可複選）：</label>
+              <div class="grid-2" style="gap:10px;">
+                <label class="opt-card selected" style="padding:10px 14px;">
+                  <input type="checkbox" class="ai-topic-cb" checked data-label="職涯發展與工作策略：結合我的主導+輔助功能與角色面具（D1），分析最適合我的職涯定位、高價值戰場與該避開的職場消耗泥淖" />
+                  <span class="opt-text"><strong>💼 職涯發展與工作策略</strong><br /><span style="font-size:12.5px; color:var(--text-muted);">最佳定位、發揮主導+輔助優勢、避開消耗泥淖</span></span>
+                </label>
+                <label class="opt-card selected" style="padding:10px 14px;">
+                  <input type="checkbox" class="ai-topic-cb" checked data-label="感情、伴侶與人際關係：結合我的情感/思考切面與第七盲點（PoLR），分析我的戀愛互動模式、溝通雷區與適合的伴侶相處之道" />
+                  <span class="opt-text"><strong>❤️ 感情、伴侶與人際關係</strong><br /><span style="font-size:12.5px; color:var(--text-muted);">戀愛互動模式、溝通盲點雷區、伴侶磨合建議</span></span>
+                </label>
+                <label class="opt-card selected" style="padding:10px 14px;">
+                  <input type="checkbox" class="ai-topic-cb" checked data-label="跨維度特例切面（Out-of-Preference Facets）深度剖析：逐一解析我與典型同類型人不同的特例切面，說明這些反差如何形成我的獨特競爭力或內在矛盾" />
+                  <span class="opt-text"><strong>🌟 跨維度特例切面深度剖析</strong><br /><span style="font-size:12.5px; color:var(--text-muted);">為什麼我跟刻板印象的 ${escapeHtml(bf)} 不同？獨特反差優勢</span></span>
+                </label>
+                <label class="opt-card selected" style="padding:10px 14px;">
+                  <input type="checkbox" class="ai-topic-cb" checked data-label="高壓崩潰（The Grip）急救與成長處方：根據我的 CF9/CF10 高壓失控反應與劣勢功能，設計日常微劑量充電與壓力解套計畫" />
+                  <span class="opt-text"><strong>🛡️ 高壓崩潰（The Grip）急救處方</strong><br /><span style="font-size:12.5px; color:var(--text-muted);">辨識失控前兆、劣勢功能解套與低摩擦充電法</span></span>
+                </label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="aiCustomQuestion">2. 補充您目前遇到的具體問題或想問 AI 的情境（選填）：</label>
+              <input id="aiCustomQuestion" class="form-input" type="text" placeholder="例如：我目前是工程師在猶豫該轉管理職還是架構師？／我跟伴侶（ENFP）常因規劃與直白溝通起衝突怎麼辦？" />
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+              <button class="btn btn-primary" type="button" data-ai-action="copy">📋 一鍵複製「AI 1對1顧問深聊提示詞」（貼給 AI 即可開聊）</button>
+              <button class="btn btn-outline" type="button" data-ai-action="preview">👁️ 展開 / 檢視提示詞原文</button>
+            </div>
+            <div id="aiPromptPreviewBox" class="hidden" style="margin-top:14px;">
+              <textarea id="aiPromptTextarea" class="form-input" rows="12" readonly style="font-family:monospace; font-size:12.5px; background:#0f172a; color:#f8fafc; line-height:1.5;"></textarea>
+            </div>
+          </div>
+
           <div class="card">
             <div class="card-header">
               <h2 class="card-title">一、去角色化分析與雙軌校準結果</h2>
@@ -2451,13 +2674,14 @@
               <strong>雙軌一致性檢核：</strong>${
                 c.isConsistent
                   ? `您的 Step II 行為問卷結果（${c.step2Type}）與榮格八維深層推導（${c.jungTop1}）完全一致，結果信度極高。`
-                  : `您的問卷行為偏好（${c.step2Type}）與榮格八維深層動力（${c.jungTop1}）原本存在差異，這正是專業級評測必須執行「階段四 Best-Fit 驗證」的原因。經由您親自比對核心動機、高壓反撲與盲點後，正式確立為 <strong>${bf}</strong>。`
+                  : `您的問卷表面行為偏好（${c.step2Type}）與榮格八維深層動力（${c.jungTop1}）原本存在差異，這常源於職場技能面具（如強大的 Te 務實化偽裝成 S，或工作要求排程偽裝成 J）。經由階段四 Best-Fit 驗證核心動機、高壓反撲與盲點後，正式校準確立為 <strong>${bf}</strong>。`
               }
             </div>
             <div class="callout">
               <strong>職場角色面具（Persona）影響診斷：</strong><br />
               • 目前角色負荷：${escapeHtml(persona.chosen)}<br />
               • 脫鞋後自然回血方式：${escapeHtml(persona.d2Text)}<br />
+              • 青少年時期原生本能：${escapeHtml(persona.d3Text)}<br />
               • <strong>專家解讀：</strong>${escapeHtml(persona.alertText)}
             </div>
           </div>
@@ -2465,7 +2689,7 @@
           <div class="card">
             <div class="card-header">
               <h2 class="card-title">二、Step II™ 四大維度與偏好清晰度指數（PCI）</h2>
-              <p class="card-subtitle">分數計算基於無中立選項的 4 級迫選法，衡量您的心理慣用手清晰度（非能力高低）</p>
+              <p class="card-subtitle">分數計算基於無中立選項的 4 級迫選法；若表面行為與底層八維不同，系統會自動標示「🔄 跨軌校準定案」</p>
             </div>
             ${dimBarsHtml}
           </div>
@@ -2473,7 +2697,7 @@
           <div class="card">
             <div class="card-header">
               <h2 class="card-title">三、Step II™ 20 子切面個人化圖譜（20 Facets Profile）</h2>
-              <p class="card-subtitle">精準定位您「與主流類型表現不同」的跨維度特例切面，這正是解釋「同為 ${bf} 卻各具特色」的關鍵</p>
+              <p class="card-subtitle">以您的最終認證類型 <strong>${bf}</strong> 為基準，精準標示您「與典型 ${bf} 表現不同」的跨維度特例切面</p>
             </div>
             ${facetsHtml}
             <div class="callout warn" style="margin-top:16px; margin-bottom:0;">
@@ -2526,6 +2750,52 @@
         `;
       }
 
+      $("reportContent").addEventListener("change", (e) => {
+        if (e.target.classList.contains("ai-topic-cb")) {
+          const card = e.target.closest(".opt-card");
+          if (card) card.classList.toggle("selected", e.target.checked);
+          const box = document.getElementById("aiPromptPreviewBox");
+          const ta = document.getElementById("aiPromptTextarea");
+          if (box && !box.classList.contains("hidden") && ta) {
+            ta.value = buildAiDeepDivePrompt();
+          }
+        }
+      });
+
+      $("reportContent").addEventListener("input", (e) => {
+        if (e.target.id === "aiCustomQuestion") {
+          const box = document.getElementById("aiPromptPreviewBox");
+          const ta = document.getElementById("aiPromptTextarea");
+          if (box && !box.classList.contains("hidden") && ta) {
+            ta.value = buildAiDeepDivePrompt();
+          }
+        }
+      });
+
+      $("reportContent").addEventListener("click", async (e) => {
+        const btn = e.target.closest("button[data-ai-action]");
+        if (!btn) return;
+        const action = btn.dataset.aiAction;
+        const promptText = buildAiDeepDivePrompt();
+        const box = document.getElementById("aiPromptPreviewBox");
+        const ta = document.getElementById("aiPromptTextarea");
+        if (ta) ta.value = promptText;
+
+        if (action === "copy") {
+          await copyTextToClipboard(
+            promptText,
+            "已複製「AI 1對1顧問深聊提示詞（含您的 38 題完整數據）」！\n現在請打開任何 AI 對話視窗直接貼上送出，即可開始 1 對 1 深度諮詢。"
+          );
+        } else if (action === "preview" && box) {
+          box.classList.toggle("hidden");
+        }
+      });
+
+      $("btnScrollAiCoach").addEventListener("click", () => {
+        const card = document.getElementById("aiCoachCard");
+        if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+
       // ==========================================
       // 12. 報告工具列與分享連結匯入/匯出功能
       // ==========================================
@@ -2571,15 +2841,17 @@
         const c = state.computed;
         const bf = c.bestFitType;
         const kb = TYPE_KB[bf];
+        applyBestFitCalibration(c, bf);
         const persona = analyzePersonaImpact(state.s1, bf);
         const dimLines = ["EI", "SN", "TF", "JP"]
           .map((k) => {
             const d = c.dimResults[k];
-            return `- **${d.leftLabel} / ${d.rightLabel}**：${d.letter} 型（${d.pct}%・${d.pci.label}）`;
+            const cal = d.isCrossCalibrated ? `（🔄 跨軌校準定案：${d.verifiedLetter} 型）` : "";
+            return `- **${d.leftLabel} / ${d.rightLabel}**：問卷初評 ${d.letter} 型（${d.pct}%・${d.pci.label}）${cal}`;
           })
           .join("\n");
         const oopLines = c.outOfPrefFacets.length
-          ? c.outOfPrefFacets.map((o) => `- **${o.facetLeft}/${o.facetRight}**：${o.note}`).join("\n")
+          ? c.outOfPrefFacets.map((o) => `- **${o.id} ${o.facetLeft}/${o.facetRight}**：${o.note}`).join("\n")
           : "- 無跨維度特例切面";
 
         const md = [
@@ -2666,7 +2938,8 @@
 
           const computed = computeDualTrack();
           const votesA = ["BF1", "BF2", "BF3"].filter((id) => state.s4.answers[id] === "A").length;
-          computed.bestFitType = votesA >= 2 ? state.s4.candA : state.s4.candB;
+          const bestFitType = votesA >= 2 ? state.s4.candA : state.s4.candB;
+          applyBestFitCalibration(computed, bestFitType);
           computed.duelVotes = { A: votesA, B: 3 - votesA, candA: state.s4.candA, candB: state.s4.candB };
           computed.isConsistent = computed.step2Type === computed.jungTop1;
           state.computed = computed;
